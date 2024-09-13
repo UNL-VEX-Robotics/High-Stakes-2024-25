@@ -10,6 +10,7 @@
 #include "vex.h"
 #include "odom.h"
 #include "pid.h"
+#include "stanley.h"
 
 using namespace vex;
 
