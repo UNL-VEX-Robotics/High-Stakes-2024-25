@@ -84,25 +84,71 @@ float Stanley::toDeg(float rad){
  * 
  * @return  a vector containing (new current point, distance to robot, angle of tangent line)
  */
-std::vector<float> Stanley::getPoint(std::vector<std::vector<float>> Path, int currentPoint){
+std::vector<float> Stanley::getPoint(std::vector<std::vector<float>> Path){
     int numPoints = Path.size();
     float distance = INFINITY;
     float angle;
-    float pointSave;
-    std::vector<float> robotPosition = this->getRobotPosition();
-    for (int i = currentPoint + 1; i < numPoints - 1; i++){
-        float tempDistance = this->getDistance(Path.at(i), Path.at(i - 1), robotPosition);
+    for (int i = this->currentPoint + 1; i < numPoints - 1; i++){
+        float tempDistance = this->getDistance(Path.at(i), Path.at(i - 1), this->robotPosition);
 
         if(tempDistance < distance){
             distance = tempDistance;
             angle = atan2f(Path.at(i).at(1) - Path.at(i - 1).at(1), Path.at(i).at(0) - Path.at(i - 1).at(0));
-            pointSave = (float)i;
+            this->currentPoint = i;
         }
     }
 
-    return {pointSave, distance, angle};
+    return {distance, angle};
 }
 
-float Stanley::getTargetHeading(std::vector<std::vector<float>> Path, float kt, float currentVelocity){
-    return 0;
+
+/**
+ * Public function to generate the target heading for the robot
+ * 
+ * @param   Path                a std::vector<std::vector<float>> containing the Path to be followed
+ * @param   robotPosition       a std::vector<float> containing the robot's position
+ * @param   kt                  the gain value
+ * @param   currentVelocity     the robot's current velocity
+ * 
+ * @return the target heading, in degrees
+ */
+float Stanley::getTargetHeading(std::vector<std::vector<float>> Path, std::vector<float> robotPosition, float kt, float currentVelocity){
+    this->robotPosition = robotPosition;
+    std::vector<float> point = this->getPoint(Path);
+    float headingError = this->restrain(point.at(1) - this->toRad(this->robotPosition.at(2)), -M_PI, M_PI);
+
+    float targetHeading = headingError + atan2f(kt * point.at(0), currentVelocity);
+    return this->toDeg(targetHeading);
+}
+
+
+/**
+ * Returns the path distance to the final point
+ * 
+ * @param   Path    the path
+ * 
+ * @return total distance
+ */
+float Stanley::getTargetDistance(std::vector<std::vector<float>> Path){
+    int numPoints = Path.size();
+    float distance = 0;
+    for (int i = currentPoint + 1; i < numPoints - 1; i++){
+        distance += getDistance(Path.at(i), Path.at(i - 1));
+    }
+
+    return distance;
+}
+
+
+/**
+ * Constructor method for the Stanley class
+ */
+Stanley::Stanley(){}
+
+
+/**
+ * Resets the currentPoint to 0, allowing to start a new path
+ */
+void Stanley::reset(){
+    this->currentPoint = 0;
 }
