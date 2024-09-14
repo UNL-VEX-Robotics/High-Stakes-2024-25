@@ -93,7 +93,7 @@ std::vector<float> Stanley::getPoint(std::vector<std::vector<float>> Path){
 
         if(tempDistance < distance){
             distance = tempDistance;
-            angle = atan2f(Path.at(i).at(1) - Path.at(i - 1).at(1), Path.at(i).at(0) - Path.at(i - 1).at(0));
+            angle = atan2f(Path.at(i).at(0) - Path.at(i - 1).at(0), Path.at(i).at(1) - Path.at(i - 1).at(1));
             this->currentPoint = i;
         }
     }
