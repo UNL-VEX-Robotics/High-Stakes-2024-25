@@ -17,17 +17,28 @@ using namespace vex;
 // A global instance of competition
 competition Competition;
 
-// define your global instances of motors and other devices here
+/* ---------- Global Devices ---------- */
+//brain
+brain Brain;
 
-/*---------------------------------------------------------------------------*/
-/*                          Pre-Autonomous Functions                         */
-/*                                                                           */
-/*  You may want to perform some actions before the competition starts.      */
-/*  Do them in the following function.  You must return from this function   */
-/*  or the autonomous and usercontrol tasks will not be started.  This       */
-/*  function is only called once after the V5 has been powered on and        */
-/*  not every time that the robot is disabled.                               */
-/*---------------------------------------------------------------------------*/
+//controller
+controller Controller1 = controller(primary);
+
+//motors
+motor Left = motor(PORT1);
+motor Right = motor(PORT2, true);
+
+//sensors
+inertial Inertial = inertial(PORT10);
+encoder Vertical = encoder(Brain.ThreeWirePort.C);
+encoder Horizontal = encoder(Brain.ThreeWirePort.A);
+
+//objects
+Stanley stanley = Stanley();
+odom Odometry(Vertical, Horizontal, Inertial, -0.5, 0.024, 0.875, 0.024, 10);
+
+//tasks
+task startOdom;
 
 void pre_auton(void) {
 
@@ -36,14 +47,12 @@ void pre_auton(void) {
 }
 
 /*---------------------------------------------------------------------------*/
-/*                                                                           */
-/*                              Autonomous Task                              */
-/*                                                                           */
-/*  This task is used to control your robot during the autonomous phase of   */
-/*  a VEX Competition.                                                       */
-/*                                                                           */
-/*  You must modify the code to add your own robot specific commands here.   */
-/*---------------------------------------------------------------------------*/
+/* ---------- Autonomous ---------- */
+
+int start_odometry(){
+  Odometry.start();
+  return 0;
+}
 
 void autonomous(void) {
   // ..........................................................................
@@ -51,29 +60,21 @@ void autonomous(void) {
   // ..........................................................................
 }
 
-/*---------------------------------------------------------------------------*/
-/*                                                                           */
-/*                              User Control Task                            */
-/*                                                                           */
-/*  This task is used to control your robot during the user control phase of */
-/*  a VEX Competition.                                                       */
-/*                                                                           */
-/*  You must modify the code to add your own robot specific commands here.   */
-/*---------------------------------------------------------------------------*/
+/* ---------- User Control ---------- */
+
 
 void usercontrol(void) {
   // User control code here, inside the loop
+
+  Inertial.calibrate();
+  vex::wait(3, seconds);
+
+  startOdom = task(start_odometry);
   while (1) {
-    // This is the main execution loop for the user control program.
-    // Each time through the loop your program should update motor + servo
-    // values based on feedback from the joysticks.
+    Left.spin(forward, Controller1.Axis3.position(percent) + Controller1.Axis1.position(percent), percent);
+    Right.spin(forward, Controller1.Axis3.position(percent) - Controller1.Axis1.position(percent), percent);
 
-    // ........................................................................
-    // Insert user code here. This is where you use the joystick values to
-    // update your motors, etc.
-    // ........................................................................
-
-    wait(20, msec); // Sleep the task for a short amount of time to
+    vex::wait(20, msec); // Sleep the task for a short amount of time to
                     // prevent wasted resources.
   }
 }

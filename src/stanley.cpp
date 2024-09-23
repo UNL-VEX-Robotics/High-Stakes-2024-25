@@ -93,7 +93,7 @@ std::vector<float> Stanley::getPoint(std::vector<std::vector<float>> Path){
 
         if(tempDistance < distance){
             distance = tempDistance;
-            angle = atan2f(Path.at(i).at(1) - Path.at(i - 1).at(1), Path.at(i).at(0) - Path.at(i - 1).at(0));
+            angle = atan2f(Path.at(i).at(0) - Path.at(i - 1).at(0), Path.at(i).at(1) - Path.at(i - 1).at(1));
             this->currentPoint = i;
         }
     }
@@ -117,7 +117,9 @@ float Stanley::getTargetHeading(std::vector<std::vector<float>> Path, std::vecto
     std::vector<float> point = this->getPoint(Path);
     float headingError = this->restrain(point.at(1) - this->toRad(this->robotPosition.at(2)), -M_PI, M_PI);
 
-    float targetHeading = headingError + atan2f(kt * point.at(0), currentVelocity);
+    if(currentVelocity == 0) currentVelocity = 0.0001;
+    std::cout << std::endl << std::endl << "atan: " << atanf(kt * point.at(0) / currentVelocity);
+    float targetHeading = headingError + atanf(kt * point.at(0) / currentVelocity);
     return this->toDeg(targetHeading);
 }
 
@@ -129,12 +131,14 @@ float Stanley::getTargetHeading(std::vector<std::vector<float>> Path, std::vecto
  * 
  * @return total distance
  */
-float Stanley::getTargetDistance(std::vector<std::vector<float>> Path){
+float Stanley::getTargetDistance(std::vector<std::vector<float>> Path, std::vector<float> robotPosition){
     int numPoints = Path.size();
     float distance = 0;
     for (int i = currentPoint + 1; i < numPoints - 1; i++){
         distance += getDistance(Path.at(i), Path.at(i - 1));
     }
+
+    distance += getDistance(robotPosition, Path.at(numPoints - 1));
 
     return distance;
 }

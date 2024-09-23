@@ -21,7 +21,7 @@ class Stanley{
     std::vector<float> getPoint(std::vector<std::vector<float>> Path);
 public:
     float getTargetHeading(std::vector<std::vector<float>> Path, std::vector<float> robotPosition, float kt, float currentVelocity);
-    float getTargetDistance(std::vector<std::vector<float>> Path);
+    float getTargetDistance(std::vector<std::vector<float>> Path, std::vector<float> robotPosition);
     Stanley();
     void reset();
 };
