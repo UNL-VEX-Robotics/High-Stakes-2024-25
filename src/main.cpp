@@ -10,7 +10,7 @@
 #include "vex.h"
 #include "odom.h"
 #include "pid.h"
-#include "stanley.h"
+#include "ramsete.h"
 
 using namespace vex;
 
@@ -28,14 +28,17 @@ controller Controller1 = controller(primary);
 motor Left = motor(PORT1);
 motor Right = motor(PORT2, true);
 
+motor_group LeftMG = motor_group(Left);
+motor_group RightMG = motor_group(Right);
+
 //sensors
 inertial Inertial = inertial(PORT10);
 encoder Vertical = encoder(Brain.ThreeWirePort.C);
 encoder Horizontal = encoder(Brain.ThreeWirePort.A);
 
 //objects
-Stanley stanley = Stanley();
 odom Odometry(Vertical, Horizontal, Inertial, -0.5, 0.024, 0.875, 0.024, 10);
+ramsete myRamsete = ramsete(std::bind(&odom::getPosition, &Odometry), &LeftMG, &RightMG, 10, 2.75, 1, 0.25);
 
 //tasks
 task startOdom;
