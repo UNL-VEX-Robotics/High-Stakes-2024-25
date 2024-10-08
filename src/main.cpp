@@ -159,32 +159,46 @@ void usercontrol(void) {
     brain Brain;
     led clamp = led(Brain.ThreeWirePort.A);
     led ratchet = led(Brain.ThreeWirePort.B);
+    
+    bool toggle = false;
+    bool wasPressing = false;
 
 
     while (true) {
+
+
         // Control Hook and Front Intake
         if (Controller.ButtonA.pressing()) {
-            clamp.on();
+            clamp.off();
         }
 
          if (Controller.ButtonB.pressing()) {
             ratchet.on();
         }
 
-        if (Controller.ButtonL1.pressing()) {
-            HookIntake.spin(fwd, 100, percent);
+        if(toggle == true){
+          HookIntake.spin(fwd, 50, percent);
+          FrontIntake.spin(fwd, 100, percent);
+        }
+        if(Controller.ButtonL1.pressing() && !wasPressing ){
+          toggle = !toggle;
+          HookIntake.stop();
+          FrontIntake.stop();
+        }
+        waspressing = Controller.ButtonL1.pressing();
+
+
+        if (Controller.ButtonL2.pressing()){
+            HookIntake.spin(fwd, 50, percent);
             FrontIntake.spin(fwd, 100, percent);
-        }else if (Controller.ButtonL2.pressing()){
-            HookIntake.spin(reverse, 100, percent);
-            FrontIntake.spin(reverse, 100, percent);
         } else {
             HookIntake.stop(); // Stop when no button is pressed
             FrontIntake.stop();
         }
 
-        if(Controller.ButtonR1.pressing()){
+        if(Controller.ButtonR2.pressing()){
           ClawMotorGroup.spin(fwd, 100, percent);
-        } else if (Controller.ButtonR2.pressing()){
+        } else if (Controller.ButtonR1.pressing()){
           ClawMotorGroup.spin(reverse, 100, percent);
         } else {
           ClawMotorGroup.stop();
@@ -195,7 +209,7 @@ void usercontrol(void) {
         MotorGroupLeft.spin(fwd, Controller.Axis1.position() - Controller.Axis3.position(), percent);
         MotorGroupRight.spin(fwd, Controller.Axis3.position() + Controller.Axis1.position(), percent);
         */
-        
+
         //tank drive
         MotorGroupLeft.spin(fwd, Controller.Axis3.position(), percent);
         MotorGroupRight.spin(fwd, Controller.Axis2.position(), percent);
