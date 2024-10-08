@@ -10,6 +10,8 @@
 #include "vex.h"
 #include "odom.h"
 #include "grapher.h"
+#include "drivetrain.h"
+#include "auton-selector.h"
 
 using namespace vex;
 
@@ -17,6 +19,9 @@ using namespace vex;
 competition Competition;
 
 // define your global instances of motors and other devices here
+brain Brain;
+selector autoSelection = selector(&Brain.Screen, true);
+
 
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
@@ -29,7 +34,23 @@ competition Competition;
 /*---------------------------------------------------------------------------*/
 
 void pre_auton(void) {
+  autoSelection.setScreenColor(color(55, 55, 55));
+  autoSelection.setPageDefaults(vex::color(white), vex::color(155, 155, 155), vex::color(white), vex::color(55, 55, 55), vex::color(55, 55, 55), vex::color(white), 50, 2);
+  autoSelection.setAutonDefaults(vex::color(white), vex::color(white), vex::color(black), vex::color(200, 200, 200), vex::color(200, 200, 200), vex::color(black), 100, 30, 2);
+  autoSelection.addPage("Red", vex::color(white), vex::color(155, 155, 155), vex::color(white), vex::color(200, 0, 0), vex::color(200, 0, 0), vex::color(white));
+  autoSelection.addPage("Blue", vex::color(white), vex::color(155, 155, 155), vex::color(white), vex::color(0, 0, 200), vex::color(0, 0, 200), vex::color(white));
+  autoSelection.addAuton(20, 70, "Positive", "Red");
+  autoSelection.addBreak(250, 100, "Calibrate", "none", vex::color(black), vex::color(black), vex::color(white));
 
+  std::vector<const char*> selectedAuto = autoSelection.runSelection();
+
+  Brain.Screen.clearScreen();
+  Brain.Screen.setCursor(1, 1);
+  Brain.Screen.print("Color: ");
+  Brain.Screen.print(selectedAuto.at(0));
+  Brain.Screen.setCursor(2, 1);
+  Brain.Screen.print("Auto: ");
+  Brain.Screen.print(selectedAuto.at(1));
   // All activities that occur before the competition starts
   // Example: clearing encoders, setting servo positions, ...
 }
