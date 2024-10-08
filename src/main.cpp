@@ -10,6 +10,8 @@
 #include "vex.h"
 #include "odom.h"
 #include "grapher.h"
+#include "drivetrain.h"
+#include "auton-selector.h"
 
 using namespace vex;
 
