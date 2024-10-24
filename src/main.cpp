@@ -9,98 +9,294 @@
 
 #include "vex.h"
 #include "odom.h"
-#include "grapher.h"
 #include "drivetrain.h"
-#include "auton-selector.h"
 
 using namespace vex;
 
 // A global instance of competition
 competition Competition;
 
-// define your global instances of motors and other devices here
+//------------------------------------------------------------------------------
+// Global Variables and Device Definitions
+//------------------------------------------------------------------------------
+
+// Controller
+controller Controller = controller();
+
+// Motors for Left Side
+motor Left_Motor1 = motor(PORT4, true);
+motor Left_Motor2 = motor(PORT14, true);
+motor Left_Motor3 = motor(PORT1, true);
+motor_group MotorGroupLeft = motor_group(Left_Motor1, Left_Motor2, Left_Motor3);
+
+// Motors for Right Side
+motor Right_Motor1 = motor(PORT7);
+motor Right_Motor2 = motor(PORT10);
+motor Right_Motor3 = motor(PORT18);
+motor_group MotorGroupRight = motor_group(Right_Motor1, Right_Motor2, Right_Motor3);
+
+// Intake Motors
+motor HookIntake = motor(PORT19, true);
+motor FrontIntake = motor(PORT3, true);
+
+// Claw Motors
+motor ClawMotorLeft = motor(PORT11);
+motor ClawMotorRight = motor(PORT12, true);
+motor_group ClawMotorGroup = motor_group(ClawMotorLeft, ClawMotorRight);
+
+// Brain and LEDs(motors)
 brain Brain;
-selector autoSelection = selector(&Brain.Screen, true);
+led ClampMotor = led(Brain.ThreeWirePort.A);
+led RatchetMotor = led(Brain.ThreeWirePort.B);
+
+// Control Variables
+bool toggle = false;
+bool wasPressing = false;
+bool L1wasPressing = false;
+bool XwasPressing = false;
+bool wasYPressing = false; 
+bool redirectMode = false;
 
 
-/*---------------------------------------------------------------------------*/
-/*                          Pre-Autonomous Functions                         */
-/*                                                                           */
-/*  You may want to perform some actions before the competition starts.      */
-/*  Do them in the following function.  You must return from this function   */
-/*  or the autonomous and usercontrol tasks will not be started.  This       */
-/*  function is only called once after the V5 has been powered on and        */
-/*  not every time that the robot is disabled.                               */
-/*---------------------------------------------------------------------------*/
+//Limit swtich 
+//limit limitSwitch = limit(Brain.ThreeWirePort.H);
 
-void pre_auton(void) {
-  autoSelection.setScreenColor(color(55, 55, 55));
-  autoSelection.setPageDefaults(vex::color(white), vex::color(155, 155, 155), vex::color(white), vex::color(55, 55, 55), vex::color(55, 55, 55), vex::color(white), 50, 2);
-  autoSelection.setAutonDefaults(vex::color(white), vex::color(white), vex::color(black), vex::color(200, 200, 200), vex::color(200, 200, 200), vex::color(black), 100, 30, 2);
-  autoSelection.addPage("Red", vex::color(white), vex::color(155, 155, 155), vex::color(white), vex::color(200, 0, 0), vex::color(200, 0, 0), vex::color(white));
-  autoSelection.addPage("Blue", vex::color(white), vex::color(155, 155, 155), vex::color(white), vex::color(0, 0, 200), vex::color(0, 0, 200), vex::color(white));
-  autoSelection.addAuton(20, 70, "Positive", "Red");
-  autoSelection.addBreak(250, 100, "Calibrate", "none", vex::color(black), vex::color(black), vex::color(white));
+//Optiic sensor
+optical Optical17 = optical(PORT17);
+double hue = Optical17.hue();
+//optical mode
+bool isRed = true;
 
-  std::vector<const char*> selectedAuto = autoSelection.runSelection();
+//threading
+vex::thread redirectThread;
 
-  Brain.Screen.clearScreen();
-  Brain.Screen.setCursor(1, 1);
-  Brain.Screen.print("Color: ");
-  Brain.Screen.print(selectedAuto.at(0));
-  Brain.Screen.setCursor(2, 1);
-  Brain.Screen.print("Auto: ");
-  Brain.Screen.print(selectedAuto.at(1));
-  // All activities that occur before the competition starts
-  // Example: clearing encoders, setting servo positions, ...
-}
 
-/*---------------------------------------------------------------------------*/
-/*                                                                           */
-/*                              Autonomous Task                              */
-/*                                                                           */
-/*  This task is used to control your robot during the autonomous phase of   */
-/*  a VEX Competition.                                                       */
-/*                                                                           */
-/*  You must modify the code to add your own robot specific commands here.   */
-/*---------------------------------------------------------------------------*/
+void intake_Functionality() {
+  while(true){
 
-void autonomous(void) {
-  // ..........................................................................
-  // Insert autonomous user code here.
-  // ..........................................................................
-}
+    // Toggle Intake Motors on Button Up Press
+    if (Controller.ButtonL1.pressing() && !L1wasPressing) {
+      toggle = !toggle;
+    }
 
-/*---------------------------------------------------------------------------*/
-/*                                                                           */
-/*                              User Control Task                            */
-/*                                                                           */
-/*  This task is used to control your robot during the user control phase of */
-/*  a VEX Competition.                                                       */
-/*                                                                           */
-/*  You must modify the code to add your own robot specific commands here.   */
-/*---------------------------------------------------------------------------*/
+    // Hold-to-Reverse functionality for Intake Motors (Button Down)
+    if (Controller.ButtonL2.pressing()) {
+      HookIntake.spin(reverse, 100, percent);
+      FrontIntake.spin(reverse, 100, percent);
+    } else if (toggle) {
+      // Run Intake Motors Forward if toggled
+      HookIntake.spin(fwd, 100, percent);
+      FrontIntake.spin(fwd, 100, percent);
+    } else {
+      // Stop Intake Motors if not toggled and Button Down not pressed
+      HookIntake.stop();
+      FrontIntake.stop();
+    }
 
-void usercontrol(void) {
-  // User control code here, inside the loop
-  while (1) {
-    // This is the main execution loop for the user control program.
-    // Each time through the loop your program should update motor + servo
-    // values based on feedback from the joysticks.
+    // Check for Y button press to toggle redirect mode
 
-    // ........................................................................
-    // Insert user code here. This is where you use the joystick values to
-    // update your motors, etc.
-    // ........................................................................
+    if (Controller.ButtonY.pressing() && !wasYPressing) {
+      redirectMode = !redirectMode; // Toggle redirect mode on button press
+    }
+    wasYPressing = Controller.ButtonY.pressing(); // Update previous state of Y button
+    L1wasPressing = Controller.ButtonL1.pressing();
 
-    wait(20, msec); // Sleep the task for a short amount of time to
-                    // prevent wasted resources.
+
+    // If in redirect mode and the obtical senses color 
+    if (Optical17.isNearObject()) {
+      Optical17.setLightPower(100);
+      Optical17.setLight(ledState::on);
+      
+      if (Optical17.hue() > 180 && Optical17.hue() < 240) {
+        float targetPosition = HookIntake.position(degrees) + 58; // Fine-tune this value
+        float backTargetPosition = targetPosition - 3;
+
+        // Wait until the intake reaches the desired position, then reverse to eject
+        if (Optical17.hue() > 180 && Optical17.hue() < 240 && HookIntake.position(degrees) < targetPosition){
+          waitUntil(HookIntake.position(degrees) > targetPosition);
+        }
+        waitUntil(HookIntake.position(degrees) > targetPosition);
+        HookIntake.spin(reverse, 100, percent);
+        FrontIntake.spin(reverse, 100, percent);
+
+        // Wait until the intake returns to the starting position
+        waitUntil(HookIntake.position(degrees) < backTargetPosition);
+      }
+
+
+
+
+      
+      if(((isRed && Optical17.hue() > 0 && Optical17.hue() < 30) \
+      || (!isRed && Optical17.hue() > 180 && Optical17.hue() < 240)) && redirectMode){
+        float targetPosition = HookIntake.position(degrees) + 20.215; //tuneable
+        float backTargetPosition = HookIntake.position(degrees) - 350;
+        waitUntil(HookIntake.position(degrees) > targetPosition);
+        HookIntake.spin(reverse, 100, percent); // Spin the hook intake
+        FrontIntake.spin(reverse, 100, percent); // Spin the front intake
+        waitUntil(HookIntake.position(degrees) < backTargetPosition);
+        redirectMode = false; // Optionally reset redirect mode after action
+        }
+    }
+    else{
+      Optical17.setLight(ledState::off);
+    }
+    
+    vex::this_thread::sleep_for(10);  // Small delay 
   }
 }
 
-//
-// Main will set up the competition functions and callbacks.
-//
+
+//redirect function (for threading)
+/*
+void redirectMotor() {
+
+  // Perform redirection logic here
+    float targetPosition = HookIntake.position(degrees) + 58; // Adjust as needed
+    float backTargetPosition = HookIntake.position(degrees) - 5;
+
+    // Redirect forward until the target position
+    while (HookIntake.position(degrees) < targetPosition) {
+      HookIntake.spin(fwd, 100, percent);
+      FrontIntake.spin(fwd, 100, percent);
+      this_thread::sleep_for(10);  // Small delay to prevent CPU overload
+    }
+
+    // Reverse the motors for the specified distance
+    while (HookIntake.position(degrees) > backTargetPosition) {
+      HookIntake.spin(reverse, 100, percent);
+      FrontIntake.spin(reverse, 100, percent);
+      this_thread::sleep_for(10);
+    
+
+    // Stop the motors when the redirection is done
+    HookIntake.stop();
+    FrontIntake.stop();
+  }
+}
+*/ 
+
+
+//eject function (used in threading)
+
+/*
+void Eject(){
+        float targetPosition = HookIntake.position(degrees) + 27; //tuneable
+        float backTargetPosition = HookIntake.position(degrees) - 300;
+        waitUntil(HookIntake.position(degrees) > targetPosition);
+        HookIntake.spin(reverse, 100, percent); // Spin the hook intake
+        FrontIntake.spin(reverse, 100, percent); // Spin the front intake
+        //task::sleep(2000); // Wait for 2 seconds
+        waitUntil(HookIntake.position(degrees) < backTargetPosition);
+        redirectMode = false; // Optionally reset redirect mode after action
+}
+*/
+//------------------------------------------------------------------------------
+// Pre-Autonomous Functions
+//------------------------------------------------------------------------------
+
+/**
+ * @brief Function to handle pre-autonomous setup.
+ * 
+ * This function is called once after the V5 has been powered on.
+ * It can be used to initialize sensors, reset encoders, etc.
+ */
+void pre_auton(void) {
+  // All activities that occur before the competition starts
+  // Example: clearing encoders, setting servo positions, ...
+
+  Optical17.setLightPower(100, percent);
+}
+
+//------------------------------------------------------------------------------
+// Autonomous Task
+//------------------------------------------------------------------------------
+
+/**
+ * @brief Function to handle autonomous control.
+ * 
+ * This function should contain the autonomous routine for the robot.
+ */
+void autonomous(void) {
+    /**
+    
+    
+    */
+
+}
+
+/**
+ * @brief Function to read the current position from encoders.
+ * 
+ * @return float Average position from left and right motor encoders.
+
+float readCurrentPosition() {
+  // Assuming you have encoders set up, return the average of the left and right motor encoder values.
+  float leftPosition = Left_Motor1.rotation(degrees);
+  float rightPosition = Right_Motor2.rotation(degrees);
+  return (leftPosition + rightPosition) / 2; // Return the average
+}
+*/
+//------------------------------------------------------------------------------
+// User Control Task
+//------------------------------------------------------------------------------
+
+/**
+ * Function to handle user control.
+ * 
+ * This function should contain the teleoperated control code for the robot.
+ */
+void usercontrol(void) {
+  //thread
+  vex::thread t_intake = vex::thread(intake_Functionality);
+  
+  while (true) {
+    
+    // Toggle Clamp LED on ButtonL1 Press
+    if (Controller.ButtonUp.pressing() && !wasPressing) {
+      ClampMotor.set(!ClampMotor);
+    }
+
+    // Toggle RatchetMotor LED on ButtonX Press
+    if (Controller.ButtonX.pressing() && !XwasPressing) {
+      RatchetMotor.set(!RatchetMotor);
+    }
+
+    
+
+
+    // Update Toggle States
+    wasPressing = Controller.ButtonUp.pressing();
+    XwasPressing = Controller.ButtonX.pressing();
+
+    // Control Claw Motors
+    if (Controller.ButtonR2.pressing()) {
+      ClawMotorGroup.spin(fwd, 100, percent);
+    } else if (Controller.ButtonR1.pressing()) {
+      ClawMotorGroup.spin(reverse, 100, percent);
+    } else {
+      ClawMotorGroup.stop();
+    }
+
+    // Drive Control (Tank Drive)
+    MotorGroupLeft.spin(fwd, Controller.Axis3.position(), percent);
+    MotorGroupRight.spin(fwd, Controller.Axis2.position(), percent);
+
+    task::sleep(20);
+  }
+
+}
+
+
+//------------------------------------------------------------------------------
+// Main Function
+//------------------------------------------------------------------------------
+
+/**
+ * @brief Main function to set up competition callbacks and run the robot.
+ * 
+ * @return int 
+ */
 int main() {
   // Set up callbacks for autonomous and driver control periods.
   Competition.autonomous(autonomous);
@@ -111,6 +307,6 @@ int main() {
 
   // Prevent main from exiting with an infinite loop.
   while (true) {
-    wait(100, msec);
+    task::sleep(100);
   }
 }
