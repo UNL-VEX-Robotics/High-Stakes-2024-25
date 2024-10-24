@@ -18,7 +18,64 @@ using namespace vex;
 // A global instance of competition
 competition Competition;
 
-// define your global instances of motors and other devices here
+/* ---------- Devices ---------- */
+vex::brain Brain;
+controller Controller1 = controller(primary);
+
+motor RightFront = motor(PORT1, ratio6_1, false);
+motor RightMiddle = motor(PORT2, ratio6_1, false);
+motor RightTop = motor(PORT3, ratio6_1, true);
+motor RightBack = motor(PORT6, ratio6_1, false);
+
+motor LeftFront = motor(PORT5, ratio6_1, true);
+motor LeftMiddle = motor(PORT10, ratio6_1, true);
+motor LeftTop = motor(PORT9, ratio6_1, false);
+motor LeftBack = motor(PORT19, ratio6_1, true);
+
+motor LeftIntake = motor(PORT7, ratio18_1, false);
+
+motor LeftLift = motor(PORT8, ratio36_1, true);
+
+motor_group Right = motor_group(RightFront, RightMiddle, RightTop, RightBack);
+motor_group Left = motor_group(LeftFront, LeftMiddle, LeftTop, LeftBack);
+
+inertial Inertial = inertial(PORT4);
+optical Optical = optical(PORT20);
+
+/* ---------- Tasks ---------- */
+vex::task dt_drivetrain;
+vex::task dt_intake;
+
+/* ---------- Global Variables ---------- */
+bool isRed = false;
+
+const int ringEjectPosition = 1920; //should be 650 once there is 3 hooks, start code with a hook vertical
+
+/**
+ * @breif determines if the ring is red based on hue
+ * 
+ * @param hue the hue seen by the optical sensor
+ * 
+ * @return  true if red, false otherwise
+ */
+bool isRedRing(vex::color c)
+{
+  if(c == red) return true;
+  return false;
+}
+
+/**
+ * @breif determines if the ring is blue based on hue
+ * 
+ * @param hue the hue seen by the optical sensor
+ * 
+ * @return  true if blue, false otherwise
+ */
+bool isBlueRing(vex::color c)
+{
+  if(c == blue) return true;
+  return false;
+}
 
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
@@ -52,30 +109,78 @@ void autonomous(void) {
   // ..........................................................................
 }
 
-/*---------------------------------------------------------------------------*/
-/*                                                                           */
-/*                              User Control Task                            */
-/*                                                                           */
-/*  This task is used to control your robot during the user control phase of */
-/*  a VEX Competition.                                                       */
-/*                                                                           */
-/*  You must modify the code to add your own robot specific commands here.   */
-/*---------------------------------------------------------------------------*/
+int drivetrain_task()
+{
+  while(true)
+  {
+    Left.spin(forward, Controller1.Axis3.position(percent) + Controller1.Axis1.position(percent), percent);
+    Right.spin(forward, Controller1.Axis3.position(percent) - Controller1.Axis1.position(percent), percent);
 
-void usercontrol(void) {
-  // User control code here, inside the loop
-  while (1) {
-    // This is the main execution loop for the user control program.
-    // Each time through the loop your program should update motor + servo
-    // values based on feedback from the joysticks.
+    task::sleep(10);
+  }
+}
 
-    // ........................................................................
-    // Insert user code here. This is where you use the joystick values to
-    // update your motors, etc.
-    // ........................................................................
+int intake_task()
+{
+  bool R1WasPressing = false;
 
-    wait(20, msec); // Sleep the task for a short amount of time to
-                    // prevent wasted resources.
+  bool intakeOn = false;
+  bool ejectRing = false;
+
+  Optical.setLightPower(50, percent);
+  Optical.integrationTime(5);
+  while(true)
+  {
+    if(Controller1.ButtonR1.pressing() && !R1WasPressing) intakeOn = !intakeOn;
+    R1WasPressing = Controller1.ButtonR1.pressing();
+
+    if(Controller1.ButtonR2.pressing()) LeftIntake.spin(reverse, 100, percent);
+    else
+    {
+      if (intakeOn) 
+      {
+        if(Optical.isNearObject())
+        {
+          Optical.setLight(ledState::on);
+
+          if((isRedRing(Optical.color()) && !isRed) || (isBlueRing(Optical.color()) && isRed)) ejectRing = true;
+        }
+        else Optical.setLight(ledState::off);
+
+        if(ejectRing)
+        {
+          if (abs(((int)LeftIntake.position(deg) % ringEjectPosition) - ringEjectPosition) < 35)
+          {
+            LeftIntake.spin(reverse, 100, percent);
+            task::sleep(250);
+            LeftIntake.spin(forward, 100, percent);
+            ejectRing = false;
+          }
+        }
+        else LeftIntake.spin(forward, 100, percent);
+      }
+      else LeftIntake.stop(brake);
+    }
+
+    task::sleep(5);
+  }
+}
+
+void usercontrol(void) 
+{
+  dt_drivetrain = task(drivetrain_task);
+  dt_intake = task(intake_task);
+
+  LeftLift.stop(hold);
+
+  while (1) 
+  {
+    waitUntil(Brain.Screen.pressing());
+    waitUntil(!Brain.Screen.pressing());
+
+    isRed = !isRed;
+
+    task::sleep(10);
   }
 }
 
