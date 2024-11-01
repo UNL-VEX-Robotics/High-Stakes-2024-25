@@ -12,6 +12,7 @@
 #include "grapher.h"
 #include "drivetrain.h"
 #include "auton-selector.h"
+#include "intake.h"
 
 using namespace vex;
 
@@ -33,6 +34,7 @@ motor LeftTop = motor(PORT9, ratio6_1, false);
 motor LeftBack = motor(PORT19, ratio6_1, true);
 
 motor LeftIntake = motor(PORT7, ratio18_1, false);
+motor_group IntakeGroup = motor_group(LeftIntake);
 
 motor LeftLift = motor(PORT8, ratio36_1, true);
 
@@ -46,36 +48,34 @@ optical Optical = optical(PORT20);
 vex::task dt_drivetrain;
 vex::task dt_intake;
 
+vex::task at_intake;
+
+vex::task gt_odometry;
+
+/* ---------- Global Problem Solvers ---------- */
+
+/**
+ * Leo's solution for passing member functions to vex::task
+ * to use: launch_task(std::bind(&class::func, &classInstance, funcParams...))
+ * Don't ask questions lol
+ */
+template <class F>
+vex::task launch_task(F&& function) {
+  //static_assert(std::is_invocable_r_v<void, F>);
+  return vex::task([](void* parameters) {
+    std::unique_ptr<std::function<void()>> ptr{static_cast<std::function<void()>*>(parameters)};
+    (*ptr)();
+    return 0;
+  }, new std::function<void()>(std::forward<F>(function)));
+}
+
+int tempReplacementForLadyBrownPositionUntilThatIsActuallyAddedIntoCodeAndIGuessUntilTheLadyBrownMechIsActuallyBuilt(){ return 0; }
+
+/* ---------- Objects ---------- */
+intake Intake = intake(&IntakeGroup, &Optical, 1920, tempReplacementForLadyBrownPositionUntilThatIsActuallyAddedIntoCodeAndIGuessUntilTheLadyBrownMechIsActuallyBuilt, -50);
+odometry Odom = odometry(odometry::odometry_pod(odometry::odometry_pod::VERTICAL, &LeftFront, 5.65625, 0.0212712), odometry::odometry_pod(), &Inertial);
+
 /* ---------- Global Variables ---------- */
-bool isRed = false;
-
-const int ringEjectPosition = 1920; //should be 650 once there is 3 hooks, start code with a hook vertical
-
-/**
- * @breif determines if the ring is red based on hue
- * 
- * @param hue the hue seen by the optical sensor
- * 
- * @return  true if red, false otherwise
- */
-bool isRedRing(vex::color c)
-{
-  if(c == red) return true;
-  return false;
-}
-
-/**
- * @breif determines if the ring is blue based on hue
- * 
- * @param hue the hue seen by the optical sensor
- * 
- * @return  true if blue, false otherwise
- */
-bool isBlueRing(vex::color c)
-{
-  if(c == blue) return true;
-  return false;
-}
 
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
@@ -86,22 +86,43 @@ bool isBlueRing(vex::color c)
 /*  function is only called once after the V5 has been powered on and        */
 /*  not every time that the robot is disabled.                               */
 /*---------------------------------------------------------------------------*/
+void pre_auton(void) 
+{
+  //after selection
+  IntakeGroup.setPosition(0, degrees);
+  Intake.setBrakeType(brake);
+  Intake.setColor(red);
 
-void pre_auton(void) {
-
-  // All activities that occur before the competition starts
-  // Example: clearing encoders, setting servo positions, ...
+  Inertial.calibrate();
+  do {
+    task::sleep(50);
+  } while (Inertial.isCalibrating());
 }
 
-/*---------------------------------------------------------------------------*/
-/*                                                                           */
-/*                              Autonomous Task                              */
-/*                                                                           */
-/*  This task is used to control your robot during the autonomous phase of   */
-/*  a VEX Competition.                                                       */
-/*                                                                           */
-/*  You must modify the code to add your own robot specific commands here.   */
-/*---------------------------------------------------------------------------*/
+/* ---------- Autonomous Functions ---------- */
+
+/**
+ * @brief sets the position of the robot and starts the odometry task
+ * 
+ * @param initialX the x-coordinate of the robot
+ * @param initialY the y-coordinate of the robot
+ * @param initialHeading the heading of the robot
+ */
+void startOdometry(float initialX, float initialY, float initialHeading)
+{
+  gt_odometry = launch_task(std::bind(&odometry::startTracking, &Odom, initialX, initialY, initialHeading));
+}
+
+/**
+ * @brief Stops the intake
+ * 
+ * @param stoppingType  the desired brakeType
+ */
+void stopIntake(brakeType stoppingType = brakeType::brake)
+{
+  at_intake.stop();
+  LeftIntake.stop(stoppingType);
+}
 
 void autonomous(void) {
   // ..........................................................................
@@ -109,76 +130,56 @@ void autonomous(void) {
   // ..........................................................................
 }
 
+/* ---------- User Control Functions ---------- */
+
+/**
+ * @brief definition for the task that controls the drivetrain
+ */
 int drivetrain_task()
 {
   while(true)
   {
-    Left.spin(forward, Controller1.Axis3.position(percent) + Controller1.Axis1.position(percent), percent);
+    Left.spin(forward, (Controller1.Axis3.position(percent) + Controller1.Axis1.position(percent)) * 0.12, volt);
     Right.spin(forward, Controller1.Axis3.position(percent) - Controller1.Axis1.position(percent), percent);
 
     task::sleep(10);
   }
 }
 
-int intake_task()
+int intake_control_task()
 {
-  bool R1WasPressing = false;
+  bool L1_wasPressing = false;
+  bool L2_wasPressing = false;
 
   bool intakeOn = false;
-  bool ejectRing = false;
+  bool spinForward = true;
 
-  Optical.setLightPower(50, percent);
-  Optical.integrationTime(5);
+  Intake.setColorSort(true);
   while(true)
   {
-    if(Controller1.ButtonR1.pressing() && !R1WasPressing) intakeOn = !intakeOn;
-    R1WasPressing = Controller1.ButtonR1.pressing();
+    if(Controller1.ButtonL1.pressing() && !L1_wasPressing) intakeOn = !intakeOn;
+    if(Controller1.ButtonL2.pressing() && !L2_wasPressing) spinForward = !spinForward;
 
-    if(Controller1.ButtonR2.pressing()) LeftIntake.spin(reverse, 100, percent);
-    else
-    {
-      if (intakeOn) 
-      {
-        if(Optical.isNearObject())
-        {
-          Optical.setLight(ledState::on);
+    if(intakeOn && spinForward) Intake.setSpeed(100);
+    else if(intakeOn) Intake.setSpeed(-100);
+    else Intake.setSpeed(0);
 
-          if((isRedRing(Optical.color()) && !isRed) || (isBlueRing(Optical.color()) && isRed)) ejectRing = true;
-        }
-        else Optical.setLight(ledState::off);
-
-        if(ejectRing)
-        {
-          if (abs(((int)LeftIntake.position(deg) % ringEjectPosition) - ringEjectPosition) < 35)
-          {
-            LeftIntake.spin(reverse, 100, percent);
-            task::sleep(250);
-            LeftIntake.spin(forward, 100, percent);
-            ejectRing = false;
-          }
-        }
-        else LeftIntake.spin(forward, 100, percent);
-      }
-      else LeftIntake.stop(brake);
-    }
-
-    task::sleep(5);
+    L1_wasPressing = Controller1.ButtonL1.pressing();
+    L2_wasPressing = Controller1.ButtonL2.pressing();
+    task::sleep(10);
   }
 }
 
 void usercontrol(void) 
 {
+  wait(3, seconds);
   dt_drivetrain = task(drivetrain_task);
-  dt_intake = task(intake_task);
+  dt_intake = launch_task(std::bind(&intake::intake_task, &Intake));
 
   LeftLift.stop(hold);
 
   while (1) 
   {
-    waitUntil(Brain.Screen.pressing());
-    waitUntil(!Brain.Screen.pressing());
-
-    isRed = !isRed;
 
     task::sleep(10);
   }

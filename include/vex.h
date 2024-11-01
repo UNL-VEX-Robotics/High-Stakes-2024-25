@@ -10,6 +10,7 @@
 #include <vector>
 #include <chrono>
 #include <functional>
+#include <memory>
 
 
 #define waitUntil(condition)                                                   \
