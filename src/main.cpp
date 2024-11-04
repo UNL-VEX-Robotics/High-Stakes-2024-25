@@ -24,20 +24,25 @@ competition Competition;
 controller Controller = controller();
 
 // Motors for Left Side
-motor Left_Motor1 = motor(PORT4, true);
-motor Left_Motor2 = motor(PORT14, true);
-motor Left_Motor3 = motor(PORT1, true);
-motor_group MotorGroupLeft = motor_group(Left_Motor1, Left_Motor2, Left_Motor3);
+motor Left_Motor1 = motor(PORT4, ratio6_1, true);
+motor Left_Motor2 = motor(PORT14, ratio6_1, true);
+motor Left_Motor3 = motor(PORT5, ratio6_1, true);
+motor Left_Motor4 = motor(PORT20, ratio6_1);
+motor_group MotorGroupLeft = motor_group(Left_Motor1, Left_Motor2, Left_Motor3, Left_Motor4);
 
 // Motors for Right Side
-motor Right_Motor1 = motor(PORT7);
-motor Right_Motor2 = motor(PORT10);
-motor Right_Motor3 = motor(PORT18);
-motor_group MotorGroupRight = motor_group(Right_Motor1, Right_Motor2, Right_Motor3);
+motor Right_Motor1 = motor(PORT7, ratio6_1);
+motor Right_Motor2 = motor(PORT10, ratio6_1);
+motor Right_Motor3 = motor(PORT18, ratio6_1);
+motor Right_Motor4 = motor(PORT8, ratio6_1, true);
+motor_group MotorGroupRight = motor_group(Right_Motor1, Right_Motor2, Right_Motor3, Right_Motor4);
 
 // Intake Motors
 motor HookIntake = motor(PORT19, true);
 motor FrontIntake = motor(PORT3, true);
+
+motor_group Intake_group = motor_group(HookIntake, FrontIntake);
+
 
 // Claw Motors
 motor ClawMotorLeft = motor(PORT11);
@@ -49,102 +54,130 @@ brain Brain;
 led ClampMotor = led(Brain.ThreeWirePort.A);
 led RatchetMotor = led(Brain.ThreeWirePort.B);
 
+//rotation ClawRotationSensor = rotation(PORTX); 
+
+
 // Control Variables
 bool toggle = false;
 bool wasPressing = false;
-bool L1wasPressing = false;
 bool XwasPressing = false;
-bool wasYPressing = false; 
+bool wasYPressing = false;
+bool RightwasPressing = false;
+bool clawPresetEnabled = false;
+
+
 bool redirectMode = false;
+bool ejectRing = false;
+
+bool isRedRing(vex::color c)
+{
+  if(c == red){
+    return true;
+  } 
+  return false;
+}
+
+bool isBlueRing(vex::color c)
+{
+  if(c == blue){
+    return true;
+  } 
+  return false;
+}
+
+const int ringEjectPosition = (1440/3); 
+
+const int ringRedirectPostion = (1440/3);
 
 
 //Limit swtich 
 //limit limitSwitch = limit(Brain.ThreeWirePort.H);
 
 //Optiic sensor
-optical Optical17 = optical(PORT17);
-double hue = Optical17.hue();
+optical Optical = optical(PORT2);
+double hue = Optical.hue();
 //optical mode
-bool isRed = true;
+bool isRed = false;
 
 //threading
 vex::thread redirectThread;
 
+int intake_task()
+{
+  bool L1WasPressing = false;
 
-void intake_Functionality() {
-  while(true){
+  bool intakeOn = false;
+  bool ejectRing = false;
+  bool redirectRing = false; 
 
-    // Toggle Intake Motors on Button Up Press
-    if (Controller.ButtonL1.pressing() && !L1wasPressing) {
-      toggle = !toggle;
-    }
-
-    // Hold-to-Reverse functionality for Intake Motors (Button Down)
-    if (Controller.ButtonL2.pressing()) {
-      HookIntake.spin(reverse, 100, percent);
-      FrontIntake.spin(reverse, 100, percent);
-    } else if (toggle) {
-      // Run Intake Motors Forward if toggled
-      HookIntake.spin(fwd, 100, percent);
-      FrontIntake.spin(fwd, 100, percent);
-    } else {
-      // Stop Intake Motors if not toggled and Button Down not pressed
-      HookIntake.stop();
-      FrontIntake.stop();
-    }
-
-    // Check for Y button press to toggle redirect mode
+  Optical.setLightPower(50, percent);
+  Optical.integrationTime(5);
+  while(true)
+  {
+    if(Controller.ButtonL1.pressing() && !L1WasPressing) intakeOn = !intakeOn;
+    L1WasPressing = Controller.ButtonL1.pressing();
 
     if (Controller.ButtonY.pressing() && !wasYPressing) {
-      redirectMode = !redirectMode; // Toggle redirect mode on button press
-    }
-    wasYPressing = Controller.ButtonY.pressing(); // Update previous state of Y button
-    L1wasPressing = Controller.ButtonL1.pressing();
-
-
-    // If in redirect mode and the obtical senses color 
-    if (Optical17.isNearObject()) {
-      Optical17.setLightPower(100);
-      Optical17.setLight(ledState::on);
-      
-      if (Optical17.hue() > 180 && Optical17.hue() < 240) {
-        float targetPosition = HookIntake.position(degrees) + 58; // Fine-tune this value
-        float backTargetPosition = targetPosition - 3;
-
-        // Wait until the intake reaches the desired position, then reverse to eject
-        if (Optical17.hue() > 180 && Optical17.hue() < 240 && HookIntake.position(degrees) < targetPosition){
-          waitUntil(HookIntake.position(degrees) > targetPosition);
-        }
-        waitUntil(HookIntake.position(degrees) > targetPosition);
-        HookIntake.spin(reverse, 100, percent);
-        FrontIntake.spin(reverse, 100, percent);
-
-        // Wait until the intake returns to the starting position
-        waitUntil(HookIntake.position(degrees) < backTargetPosition);
+      redirectMode = !redirectMode; // Toggle redirect mode on button press 
       }
+      wasYPressing = Controller.ButtonY.pressing(); // Update previous state of Y button
+     
 
+    if(Controller.ButtonL2.pressing()) Intake_group.spin(reverse, 100, percent);
+    else
+    {
+      if (intakeOn) 
+      {
+        if(Optical.isNearObject())
+        {
+          Optical.setLight(ledState::on);
 
+          if((!isRed && isRedRing(Optical.color())) || (isRed && isBlueRing(Optical.color()))){
+            ejectRing = true;
+          } 
 
-
-      
-      if(((isRed && Optical17.hue() > 0 && Optical17.hue() < 30) \
-      || (!isRed && Optical17.hue() > 180 && Optical17.hue() < 240)) && redirectMode){
-        float targetPosition = HookIntake.position(degrees) + 20.215; //tuneable
-        float backTargetPosition = HookIntake.position(degrees) - 350;
-        waitUntil(HookIntake.position(degrees) > targetPosition);
-        HookIntake.spin(reverse, 100, percent); // Spin the hook intake
-        FrontIntake.spin(reverse, 100, percent); // Spin the front intake
-        waitUntil(HookIntake.position(degrees) < backTargetPosition);
-        redirectMode = false; // Optionally reset redirect mode after action
+          if(((isRed && isRedRing(Optical.color())) || (!isRed && isBlueRing(Optical.color()))) && redirectMode){
+            redirectRing= true;
+          }
         }
+        else Optical.setLight(ledState::off);
+
+        Brain.Screen.clearScreen();
+        Brain.Screen.setCursor(1, 1);
+        Brain.Screen.print(abs((((int)HookIntake.position(deg) - 5) % ringEjectPosition) - ringEjectPosition));
+
+        if(ejectRing)
+        {
+          if (abs((((int)HookIntake.position(deg)) % ringEjectPosition) - ringEjectPosition) < 35)
+          {
+            Intake_group.stop(hold);
+            task::sleep(300);
+            Intake_group.spin(forward, 100, percent);
+            ejectRing = false;
+          }
+        }
+        else Intake_group.spin(forward, 100, percent);
+
+        if(redirectRing){
+          if (abs((((int)HookIntake.position(deg))% ringRedirectPostion) - ringRedirectPostion) < 35)
+          {
+            Intake_group.spin(reverse, 100, percent);
+            task::sleep(600);
+            Intake_group.spin(forward, 100, percent);
+            redirectRing = false;
+          }
+        }
+        else Intake_group.spin(forward, 100, percent);
+
+
+      }
+      else Intake_group.stop(brake);
     }
-    else{
-      Optical17.setLight(ledState::off);
-    }
-    
-    vex::this_thread::sleep_for(10);  // Small delay 
+
+    task::sleep(5);
   }
 }
+
 
 
 //redirect function (for threading)
@@ -205,7 +238,7 @@ void pre_auton(void) {
   // All activities that occur before the competition starts
   // Example: clearing encoders, setting servo positions, ...
 
-  Optical17.setLightPower(100, percent);
+  Optical.setLightPower(100, percent);
 }
 
 //------------------------------------------------------------------------------
@@ -248,7 +281,7 @@ float readCurrentPosition() {
  */
 void usercontrol(void) {
   //thread
-  vex::thread t_intake = vex::thread(intake_Functionality);
+  vex::thread intake_Functionality  = vex::thread(intake_task);
   
   while (true) {
     
@@ -262,12 +295,28 @@ void usercontrol(void) {
       RatchetMotor.set(!RatchetMotor);
     }
 
+
+    if (Controller.ButtonRight.pressing() && !RightwasPressing) {
+      ClawMotorGroup.spin(fwd, 100, dps);
+    }
+
     
 
 
     // Update Toggle States
+    RightwasPressing = Controller.ButtonRight.pressing();
     wasPressing = Controller.ButtonUp.pressing();
     XwasPressing = Controller.ButtonX.pressing();
+
+    
+    if (Controller.ButtonRight.pressing() && !RightwasPressing) {
+      clawPresetEnabled = !clawPresetEnabled; // Toggle the preset
+      if (clawPresetEnabled) {
+        ClawMotorGroup.spin(fwd, 90, dps); // Move to preset angle
+      } else {
+        ClawMotorGroup.spin(reverse, 90, dps); // Return to starting position
+      }
+    }
 
     // Control Claw Motors
     if (Controller.ButtonR2.pressing()) {
@@ -276,11 +325,22 @@ void usercontrol(void) {
       ClawMotorGroup.spin(reverse, 100, percent);
     } else {
       ClawMotorGroup.stop();
-    }
+    }      
+    
+   // MotorGroupLeft.spin(fwd, Controller.Axis3.position(), percent);
+   // MotorGroupRight.spin(fwd, Controller.Axis2.position(), percent);
 
-    // Drive Control (Tank Drive)
-    MotorGroupLeft.spin(fwd, Controller.Axis3.position(), percent);
-    MotorGroupRight.spin(fwd, Controller.Axis2.position(), percent);
+
+
+  if (Controller.Axis3.position() == 0 && Controller.Axis2.position() == 0) {
+      // If no input, motors hold position (brake hold)
+      MotorGroupLeft.stop(brake);
+      MotorGroupRight.stop(brake);
+  } else {
+      // Otherwise, spin motors based on controller input
+      MotorGroupLeft.spin(fwd,  Controller.Axis3.position(), percent);
+      MotorGroupRight.spin(fwd,  Controller.Axis2.position(), percent);
+  }
 
     task::sleep(20);
   }
