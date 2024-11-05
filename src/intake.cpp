@@ -6,13 +6,12 @@
  * @param intakeMotors a pointer to the intake motor group
  * @param ringSensor a pointer to the optical sensor on the intake
  */
-intake::intake(vex::motor_group *intakeMotors, vex::optical* ringSensor, int ringEjectPosition, std::function<int()> ladyBrownPosition, int ladyBrownTargetPosition) :
+intake::intake(vex::motor_group *intakeMotors, vex::optical* ringSensor, int ringEjectPosition, ladybrown* ladybrown) :
+    m_ladybrown(ladybrown),
     m_Intake(intakeMotors),
-    m_Optical(ringSensor),
+    m_Optical(ringSensor),    
     m_currentSpeed(0),
-    m_ringEjectPosition(ringEjectPosition),
-    getLadyBrownPosition(ladyBrownPosition),
-    m_targetLadyBrownPosition(ladyBrownTargetPosition)
+    m_ringEjectPosition(ringEjectPosition)    
 {  
 }
 
@@ -25,8 +24,11 @@ void intake::intake_task()
     m_Optical->integrationTime(5);
 
     bool ejectRing = false;
+    bool adjustedLadybrown = false;
+    ladybrown::ladybrown_positions currentTarget;
     while(m_runIntakeTask)
     {
+        currentTarget = m_ladybrown->getTargetPosition();
         if(m_enableColorSort)
         {
             if(m_Optical->isNearObject())
@@ -38,11 +40,33 @@ void intake::intake_task()
 
             if(ejectRing)
             {
+                adjustedLadybrown = true;
+                if(currentTarget == ladybrown::ladybrown_positions::READY)
+                {
+                    switch (m_ladybrown->getNearestPosition())
+                    {
+                        case ladybrown::ladybrown_positions::SCORE:
+                        case ladybrown::ladybrown_positions::STORAGE:
+                            m_ladybrown->setTarget(ladybrown::ladybrown_positions::STORAGE);
+                            break;
+                        case ladybrown::ladybrown_positions::READY:
+                        case ladybrown::ladybrown_positions::DOWN:
+                            m_ladybrown->setTarget(ladybrown::ladybrown_positions::DOWN);
+                            break;
+                    }
+                }
+
                 if (abs(((int)m_Intake->position(vex::rotationUnits::deg) % m_ringEjectPosition) - m_ringEjectPosition) < 35)
                 {
                     m_Intake->spin(vex::directionType::rev, 100, vex::percentUnits::pct);
                     vex::task::sleep(250);
                     ejectRing = false;
+
+                    if(adjustedLadybrown)
+                    {
+                        adjustedLadybrown = false;
+                        m_ladybrown->setTarget(ladybrown::ladybrown_positions::READY);
+                    }
                 }
             }
         }
@@ -88,9 +112,9 @@ bool intake::setColorSort(bool enable)
 /**
  * Sets the color of the intake class
  * 
- * @param allianceColor the color of the alliance
+ * @param isRed bool whether the alliance is red
  */
-void intake::setColor(vex::color allianceColor)
+void intake::setColor(bool isRed)
 {
-    m_isRed = (allianceColor == vex::color::red);
+    m_isRed = isRed;
 }

@@ -106,7 +106,8 @@ void selector::setScreenColor(vex::color background)
  * @param   height                  the height of the button
  * @param   outlineThickness        the thickness of the outline of the button
  */
-void selector::setPageDefaults(vex::color outlineColor, vex::color backgroundColor, vex::color textColor, vex::color selectedOutlineColor, vex::color selectedBackgroundColor, vex::color selectedTextColor, int height, int outlineThickness)
+void selector::setPageDefaults(vex::color outlineColor, vex::color backgroundColor, vex::color textColor, vex::color selectedOutlineColor, vex::color selectedBackgroundColor, \
+    vex::color selectedTextColor, int height, int outlineThickness)
 {
     this->page_defaults.outlineColor = outlineColor;
     this->page_defaults.backgroundColor = backgroundColor;
@@ -131,7 +132,8 @@ void selector::setPageDefaults(vex::color outlineColor, vex::color backgroundCol
  * @param   height                  the height of the button
  * @param   outlineThickness        the thickness of the outline of the button
  */
-void selector::setAutonDefaults(vex::color outlineColor, vex::color backgroundColor, vex::color textColor, vex::color selectedOutlineColor, vex::color selectedBackgroundColor, vex::color selectedTextColor, int width, int height,int outlineThickness)
+void selector::setAutonDefaults(vex::color outlineColor, vex::color backgroundColor, vex::color textColor, vex::color selectedOutlineColor, vex::color selectedBackgroundColor, \
+    vex::color selectedTextColor, int width, int height,int outlineThickness)
 {
     this->auton_defaults.outlineColor = outlineColor;
     this->auton_defaults.backgroundColor = backgroundColor;
@@ -157,7 +159,8 @@ void selector::setAutonDefaults(vex::color outlineColor, vex::color backgroundCo
  * @param   height                      the height of the button
  * @param   outlineThickness            the thickness of the outline of the button
  */
-void selector::setColorDefaults(vex::color defaultOutlineColor, vex::color defaultBackgroundColor, vex::color defaultTextColor, vex::color secondaryOutlineColor, vex::color secondaryBackgroundColor, vex::color secondaryTextColor, int width, int height, int outlineThickness, bool redDefault)
+void selector::setColorDefaults(vex::color defaultOutlineColor, vex::color defaultBackgroundColor, vex::color defaultTextColor, vex::color secondaryOutlineColor, \
+    vex::color secondaryBackgroundColor, vex::color secondaryTextColor, int width, int height, int outlineThickness, bool redDefault)
 {
     this->color_defaults.defaultOutlineColor = defaultOutlineColor;
     this->color_defaults.defaultColor = defaultBackgroundColor;
@@ -178,7 +181,8 @@ void selector::setColorDefaults(vex::color defaultOutlineColor, vex::color defau
  */
 void selector::addPage(const char *text)
 {
-    this->addPage(text, this->page_defaults.outlineColor, this->page_defaults.backgroundColor, this->page_defaults.textColor, this->page_defaults.selectedOutlineColor, this->page_defaults.selectedBackgroundColor, this->page_defaults.selectedTextColor);
+    this->addPage(text, this->page_defaults.outlineColor, this->page_defaults.backgroundColor, this->page_defaults.textColor, this->page_defaults.selectedOutlineColor, \
+        this->page_defaults.selectedBackgroundColor, this->page_defaults.selectedTextColor);
 }
 
 /**
@@ -192,7 +196,8 @@ void selector::addPage(const char *text)
  * @param   selectedBackgroundColor the color of the background while the button is selected
  * @param   selectedTextColor       the color of the text while the button is selected
  */
-void selector::addPage(const char *text, vex::color outlineColor, vex::color backgroundColor, vex::color textColor, vex::color selectedOutlineColor, vex::color selectedBackgroundColor, vex::color selectedTextColor)
+void selector::addPage(const char *text, vex::color outlineColor, vex::color backgroundColor, vex::color textColor, vex::color selectedOutlineColor, vex::color selectedBackgroundColor, \
+    vex::color selectedTextColor)
 {
     button_data this_button_data;
 
@@ -234,10 +239,12 @@ void selector::addPage(const char *text, vex::color outlineColor, vex::color bac
 void selector::addAuton(int x, int y, const char *text, const char *page, bool usePageColors)
 {
     if(!usePageColors){
-        this->addAuton(x, y, text, page, this->auton_defaults.outlineColor, this->auton_defaults.backgroundColor, this->auton_defaults.textColor, this->auton_defaults.selectedOutlineColor, this->auton_defaults.selectedBackgroundColor, this->auton_defaults.selectedTextColor);
+        this->addAuton(x, y, text, page, this->auton_defaults.outlineColor, this->auton_defaults.backgroundColor, this->auton_defaults.textColor, this->auton_defaults.selectedOutlineColor, \
+            this->auton_defaults.selectedBackgroundColor, this->auton_defaults.selectedTextColor);
     }
     else{
-        this->addAuton(x, y, text, page, this->page_defaults.outlineColor, this->page_defaults.backgroundColor, this->page_defaults.textColor, this->page_defaults.selectedOutlineColor, this->page_defaults.selectedBackgroundColor, this->page_defaults.selectedTextColor);
+        this->addAuton(x, y, text, page, this->page_defaults.outlineColor, this->page_defaults.backgroundColor, this->page_defaults.textColor, this->page_defaults.selectedOutlineColor, \
+            this->page_defaults.selectedBackgroundColor, this->page_defaults.selectedTextColor);
     }
 }
 
@@ -255,7 +262,8 @@ void selector::addAuton(int x, int y, const char *text, const char *page, bool u
  * @param   selectedBackgroundColor the color of the background while the button is selected
  * @param   selectedTextColor       the color of the text while the button is selected
  */
-void selector::addAuton(int x, int y, const char *text, const char *page, vex::color outlineColor, vex::color backgroundColor, vex::color textColor, vex::color selectedOutlineColor, vex::color selectedBackgroundColor, vex::color selectedTextColor)
+void selector::addAuton(int x, int y, const char *text, const char *page, vex::color outlineColor, vex::color backgroundColor, vex::color textColor, vex::color selectedOutlineColor, \
+    vex::color selectedBackgroundColor, vex::color selectedTextColor)
 {
     button_data this_button_data;
 
@@ -274,7 +282,8 @@ void selector::addAuton(int x, int y, const char *text, const char *page, vex::c
     this_button_data.auton_buttons_data.height = this->auton_defaults.height;
     this_button_data.auton_buttons_data.outlineThickness = this->auton_defaults.outlineThickness;
 
-    this_button_data.Button = button(this->Screen, x, y, this_button_data.auton_buttons_data.width, this_button_data.auton_buttons_data.height, backgroundColor, outlineColor, this_button_data.auton_buttons_data.outlineThickness, textColor, text);
+    this_button_data.Button = button(this->Screen, x, y, this_button_data.auton_buttons_data.width, this_button_data.auton_buttons_data.height, backgroundColor, outlineColor, \
+        this_button_data.auton_buttons_data.outlineThickness, textColor, text);
 
     this->buttons.push_back(this_button_data);
 }
@@ -289,7 +298,8 @@ void selector::addAuton(int x, int y, const char *text, const char *page, vex::c
  */
 void selector::addColor(int x, int y, const char *text, const char *page)
 {
-    this->addColor(x, y, text, page, this->color_defaults.defaultOutlineColor, this->color_defaults.defaultColor, this->color_defaults.defaultTextColor, this->color_defaults.secondaryOutlineColor, this->color_defaults.secondaryColor, this->color_defaults.secondaryTextColor);
+    this->addColor(x, y, text, page, this->color_defaults.defaultOutlineColor, this->color_defaults.defaultColor, this->color_defaults.defaultTextColor, this->color_defaults.secondaryOutlineColor, \
+        this->color_defaults.secondaryColor, this->color_defaults.secondaryTextColor);
 }
 
 /**
@@ -306,7 +316,8 @@ void selector::addColor(int x, int y, const char *text, const char *page)
  * @param   secondaryBackgroundColor    the color of the background while the button is selected
  * @param   secondaryTextColor          the color of the text while the button is selected
  */
-void selector::addColor(int x, int y, const char *text, const char *page, vex::color defaultOutlineColor, vex::color defaultBackgroundColor, vex::color defaultTextColor, vex::color secondaryOutlineColor, vex::color secondaryBackgroundColor, vex::color secondaryTextColor)
+void selector::addColor(int x, int y, const char *text, const char *page, vex::color defaultOutlineColor, vex::color defaultBackgroundColor, vex::color defaultTextColor, \
+    vex::color secondaryOutlineColor, vex::color secondaryBackgroundColor, vex::color secondaryTextColor)
 {
     button_data this_button_data;
 
@@ -325,7 +336,8 @@ void selector::addColor(int x, int y, const char *text, const char *page, vex::c
     this_button_data.color_buttons_data.height = this->color_defaults.height;
     this_button_data.color_buttons_data.outlineThickness = this->color_defaults.outlineThickness;
 
-    this_button_data.Button = button(this->Screen, x, y, this_button_data.color_buttons_data.width, this_button_data.color_buttons_data.height, defaultBackgroundColor, defaultOutlineColor, this_button_data.color_buttons_data.outlineThickness, defaultTextColor, text);
+    this_button_data.Button = button(this->Screen, x, y, this_button_data.color_buttons_data.width, this_button_data.color_buttons_data.height, defaultBackgroundColor, defaultOutlineColor, \
+        this_button_data.color_buttons_data.outlineThickness, defaultTextColor, text);
 
     this->buttons.push_back(this_button_data);
 }
@@ -357,7 +369,8 @@ void selector::addBreak(int x, int y, const char *text, const char *page, vex::c
     this_button_data.auton_buttons_data.height = this->auton_defaults.height;
     this_button_data.auton_buttons_data.outlineThickness = this->auton_defaults.outlineThickness;
 
-    this_button_data.Button = button(this->Screen, x, y, this_button_data.auton_buttons_data.width, this_button_data.auton_buttons_data.height, backgroundColor, outlineColor, this_button_data.auton_buttons_data.outlineThickness, textColor, text);
+    this_button_data.Button = button(this->Screen, x, y, this_button_data.auton_buttons_data.width, this_button_data.auton_buttons_data.height, backgroundColor, outlineColor, \
+        this_button_data.auton_buttons_data.outlineThickness, textColor, text);
 
     this->buttons.push_back(this_button_data);
 }
@@ -378,7 +391,9 @@ std::vector<const char *> selector::runSelection()
     if(numPages > 1) pageWidth /= numPages - 1;
 
     for (int i = 0; i < this->buttons.size(); i++){
-        if(this->buttons.at(i).type == buttonType::page) this->buttons.at(i).Button = button(this->Screen, this->buttons.at(i).page_buttons_data.pageNum * pageWidth, 1, pageWidth, this->buttons.at(i).page_buttons_data.height, this->buttons.at(i).page_buttons_data.backgroundColor, this->buttons.at(i).page_buttons_data.outlineColor, this->buttons.at(i).page_buttons_data.outlineThickness, this->buttons.at(i).page_buttons_data.textColor, this->buttons.at(i).buttonName);
+        if(this->buttons.at(i).type == buttonType::page) this->buttons.at(i).Button = button(this->Screen, this->buttons.at(i).page_buttons_data.pageNum * pageWidth, 1, pageWidth, \
+            this->buttons.at(i).page_buttons_data.height, this->buttons.at(i).page_buttons_data.backgroundColor, this->buttons.at(i).page_buttons_data.outlineColor, \
+            this->buttons.at(i).page_buttons_data.outlineThickness, this->buttons.at(i).page_buttons_data.textColor, this->buttons.at(i).buttonName);
     }
 
     //draw main page
@@ -407,18 +422,21 @@ std::vector<const char *> selector::runSelection()
                     
                     //update if now selected
                     if(this->buttons.at(i).page_buttons_data.isSelected){
-                        this->buttons.at(i).Button.changeColor(this->buttons.at(i).page_buttons_data.selectedBackgroundColor, this->buttons.at(i).page_buttons_data.selectedOutlineColor, this->buttons.at(i).page_buttons_data.selectedTextColor);
+                        this->buttons.at(i).Button.changeColor(this->buttons.at(i).page_buttons_data.selectedBackgroundColor, this->buttons.at(i).page_buttons_data.selectedOutlineColor, \
+                            this->buttons.at(i).page_buttons_data.selectedTextColor);
                         currentPage = this->buttons.at(i).buttonName;
                     }
                     else{
-                        this->buttons.at(i).Button.changeColor(this->buttons.at(i).page_buttons_data.backgroundColor, this->buttons.at(i).page_buttons_data.outlineColor, this->buttons.at(i).page_buttons_data.textColor);
+                        this->buttons.at(i).Button.changeColor(this->buttons.at(i).page_buttons_data.backgroundColor, this->buttons.at(i).page_buttons_data.outlineColor,\
+                             this->buttons.at(i).page_buttons_data.textColor);
                         currentPage = this->pages.at(0);
                     }
 
                     //update other pages
                     for (int j = 0; j < this->buttons.size(); j++){
                         if(this->buttons.at(j).type == buttonType::page && i != j){
-                            this->buttons.at(j).Button.changeColor(this->buttons.at(j).page_buttons_data.backgroundColor, this->buttons.at(j).page_buttons_data.outlineColor, this->buttons.at(j).page_buttons_data.textColor);
+                            this->buttons.at(j).Button.changeColor(this->buttons.at(j).page_buttons_data.backgroundColor, this->buttons.at(j).page_buttons_data.outlineColor, \
+                                this->buttons.at(j).page_buttons_data.textColor);
                             this->buttons.at(j).page_buttons_data.isSelected = false;
                         }
                     }
@@ -428,13 +446,16 @@ std::vector<const char *> selector::runSelection()
                     this->buttons.at(i).auton_buttons_data.isSelected = !this->buttons.at(i).auton_buttons_data.isSelected;
 
                     //update if now selected
-                    if(this->buttons.at(i).auton_buttons_data.isSelected) this->buttons.at(i).Button.changeColor(this->buttons.at(i).auton_buttons_data.selectedBackgroundColor, this->buttons.at(i).auton_buttons_data.selectedOutlineColor, this->buttons.at(i).auton_buttons_data.selectedTextColor);
-                    else this->buttons.at(i).Button.changeColor(this->buttons.at(i).auton_buttons_data.backgroundColor, this->buttons.at(i).auton_buttons_data.outlineColor, this->buttons.at(i).auton_buttons_data.textColor);
+                    if(this->buttons.at(i).auton_buttons_data.isSelected) this->buttons.at(i).Button.changeColor(this->buttons.at(i).auton_buttons_data.selectedBackgroundColor, \
+                        this->buttons.at(i).auton_buttons_data.selectedOutlineColor, this->buttons.at(i).auton_buttons_data.selectedTextColor);
+                    else this->buttons.at(i).Button.changeColor(this->buttons.at(i).auton_buttons_data.backgroundColor, this->buttons.at(i).auton_buttons_data.outlineColor, \
+                        this->buttons.at(i).auton_buttons_data.textColor);
 
                     //update other auton buttons
                     for(int j = 0; j < this->buttons.size(); j++){
                         if(this->buttons.at(j).type == buttonType::route && i != j){
-                            this->buttons.at(j).Button.changeColor(this->buttons.at(j).auton_buttons_data.backgroundColor, this->buttons.at(j).auton_buttons_data.outlineColor, this->buttons.at(j).auton_buttons_data.textColor);
+                            this->buttons.at(j).Button.changeColor(this->buttons.at(j).auton_buttons_data.backgroundColor, this->buttons.at(j).auton_buttons_data.outlineColor, \
+                                this->buttons.at(j).auton_buttons_data.textColor);
                             this->buttons.at(j).auton_buttons_data.isSelected = false;
                         }
                     }
@@ -447,14 +468,16 @@ std::vector<const char *> selector::runSelection()
                     if(isRed == this->color_defaults.isRed){
                         for(int j = 0; j < this->buttons.size(); j++){
                             if(this->buttons.at(j).type == buttonType::color){
-                                this->buttons.at(j).Button.changeColor(this->buttons.at(j).color_buttons_data.defaultColor, this->buttons.at(j).color_buttons_data.defaultOutlineColor, this->buttons.at(j).color_buttons_data.defaultTextColor);
+                                this->buttons.at(j).Button.changeColor(this->buttons.at(j).color_buttons_data.defaultColor, this->buttons.at(j).color_buttons_data.defaultOutlineColor, \
+                                    this->buttons.at(j).color_buttons_data.defaultTextColor);
                             }
                         }
                     }
                     else{
                         for(int j = 0; j < this->buttons.size(); j++){
                             if(this->buttons.at(j).type == buttonType::color){
-                                this->buttons.at(j).Button.changeColor(this->buttons.at(j).color_buttons_data.secondaryColor, this->buttons.at(j).color_buttons_data.secondaryOutlineColor, this->buttons.at(j).color_buttons_data.secondaryTextColor);
+                                this->buttons.at(j).Button.changeColor(this->buttons.at(j).color_buttons_data.secondaryColor, this->buttons.at(j).color_buttons_data.secondaryOutlineColor, \
+                                    this->buttons.at(j).color_buttons_data.secondaryTextColor);
                             }
                         }
                     }

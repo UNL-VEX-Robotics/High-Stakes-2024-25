@@ -13,6 +13,7 @@
 #include "drivetrain.h"
 #include "auton-selector.h"
 #include "intake.h"
+#include "pnuematics.h"
 
 using namespace vex;
 
@@ -37,18 +38,24 @@ motor LeftIntake = motor(PORT7, ratio18_1, false);
 motor_group IntakeGroup = motor_group(LeftIntake);
 
 motor LeftLift = motor(PORT8, ratio36_1, true);
+motor_group LiftGroup = motor_group(LeftLift);
 
 motor_group Right = motor_group(RightFront, RightMiddle, RightTop, RightBack);
 motor_group Left = motor_group(LeftFront, LeftMiddle, LeftTop, LeftBack);
 
 inertial Inertial = inertial(PORT4);
 optical Optical = optical(PORT20);
+potV2 LiftPotentiometer = potV2(Brain.ThreeWirePort.A);
 
 /* ---------- Tasks ---------- */
 vex::task dt_drivetrain;
 vex::task dt_intake;
+vex::task dt_intake_control;
+vex::task dt_ladybrown;
+vex::task dt_ladybrown_control;
 
 vex::task at_intake;
+vex::task at_ladybrown;
 
 vex::task gt_odometry;
 
@@ -69,11 +76,11 @@ vex::task launch_task(F&& function) {
   }, new std::function<void()>(std::forward<F>(function)));
 }
 
-int tempReplacementForLadyBrownPositionUntilThatIsActuallyAddedIntoCodeAndIGuessUntilTheLadyBrownMechIsActuallyBuilt(){ return 0; }
-
 /* ---------- Objects ---------- */
-intake Intake = intake(&IntakeGroup, &Optical, 1920, tempReplacementForLadyBrownPositionUntilThatIsActuallyAddedIntoCodeAndIGuessUntilTheLadyBrownMechIsActuallyBuilt, -50);
+ladybrown Ladybrown = ladybrown(&LiftGroup, 0, 0, 0, 0);
+intake Intake = intake(&IntakeGroup, &Optical, 1920, &Ladybrown);
 odometry Odom = odometry(odometry::odometry_pod(odometry::odometry_pod::VERTICAL, &LeftFront, 5.65625, 0.0212712), odometry::odometry_pod(), &Inertial);
+chassis Drivetrain = chassis(std::bind(&odometry::getPosition, &Odom), &Left, &Right, &Inertial, 11.3125, 0.0212712);
 
 /* ---------- Global Variables ---------- */
 
@@ -88,15 +95,52 @@ odometry Odom = odometry(odometry::odometry_pod(odometry::odometry_pod::VERTICAL
 /*---------------------------------------------------------------------------*/
 void pre_auton(void) 
 {
-  //after selection
+  //  Calibration
+  Brain.Screen.clearScreen();
+  Brain.Screen.setCursor(1, 1);
+  Brain.Screen.setPenColor(white);
+  Brain.Screen.setFillColor(black);
+  Brain.Screen.print("Calibrating...");
+
   IntakeGroup.setPosition(0, degrees);
   Intake.setBrakeType(brake);
-  Intake.setColor(red);
+  Intake.setColor(true);
 
-  Inertial.calibrate();
+  Inertial.startCalibration();
   do {
     task::sleep(50);
   } while (Inertial.isCalibrating());
+
+  //  Set all PID constants
+
+  //  Update display for clarification
+  Brain.Screen.setCursor(2, 1);
+  Brain.Screen.setPenColor(green);
+  Brain.Screen.print("Calibrated.");
+  task::sleep(10);
+
+  //  check if devices are connected
+  Brain.Screen.setPenColor(red);
+  Brain.Screen.newLine();
+  
+  if(!LeftFront.installed()) Brain.Screen.print("Left Front Drive Motor Disconnected!");
+  if(!LeftMiddle.installed()) Brain.Screen.print("Left Middle Drive Motor Disconnected!");
+  if(!LeftTop.installed()) Brain.Screen.print("Left Top Drive Motor Disconnected!");
+  if(!LeftBack.installed()) Brain.Screen.print("Left Back Drive Motor Disconnected!");
+  
+  if(!RightFront.installed()) Brain.Screen.print("Right Front Drive Motor Disconnected!");
+  if(!RightMiddle.installed()) Brain.Screen.print("Right Middle Drive Motor Disconnected!");
+  if(!RightTop.installed()) Brain.Screen.print("Right Top Drive Motor Disconnected!");
+  if(!RightBack.installed()) Brain.Screen.print("Right Back Drive Motor Disconnected!");
+
+  if(!LeftIntake.installed()) Brain.Screen.print("Left Intake Motor Disconnected!");
+  if(!LeftLift.installed()) Brain.Screen.print("Left Ladybrown Motor Disconnected!");
+
+  if(!Inertial.installed()) Brain.Screen.print("Inertial Sensor Disconnected!");
+  if(!Optical.installed()) Brain.Screen.print("Optical Sensor Disconnected");
+
+  //  check motor temperatures
+  
 }
 
 /* ---------- Autonomous Functions ---------- */
@@ -140,7 +184,7 @@ int drivetrain_task()
   while(true)
   {
     Left.spin(forward, (Controller1.Axis3.position(percent) + Controller1.Axis1.position(percent)) * 0.12, volt);
-    Right.spin(forward, Controller1.Axis3.position(percent) - Controller1.Axis1.position(percent), percent);
+    Right.spin(forward, (Controller1.Axis3.position(percent) - Controller1.Axis1.position(percent)) * 0.12, volt);
 
     task::sleep(10);
   }
@@ -155,6 +199,7 @@ int intake_control_task()
   bool spinForward = true;
 
   Intake.setColorSort(true);
+  Intake.setBrakeType(brake);
   while(true)
   {
     if(Controller1.ButtonL1.pressing() && !L1_wasPressing) intakeOn = !intakeOn;
@@ -170,13 +215,42 @@ int intake_control_task()
   }
 }
 
+int ladybrown_control_task()
+{
+  bool B_wasPressing = false;
+  int ladybrownTarget = 1; // READY
+  while(true)
+  {
+    if(Controller1.ButtonB.pressing() && !B_wasPressing)
+    {
+      ladybrownTarget = 1;
+      Ladybrown.setTarget(ladybrown::ladybrown_positions::DOWN);
+    }
+    B_wasPressing = Controller1.ButtonB.pressing();
+
+    while(Controller1.ButtonR1.pressing())
+    {
+      Ladybrown.setTarget((ladybrown::ladybrown_positions)ladybrownTarget);
+      if(Ladybrown.getNearestPosition() == Ladybrown.getTargetPosition())
+      {
+        ladybrownTarget++;
+        if(ladybrownTarget > 3) ladybrownTarget = 1; // cycle from SCORE to READY
+      }
+      task::sleep(10);
+    }
+
+    task::sleep(10);
+  }
+}
+
 void usercontrol(void) 
 {
   wait(3, seconds);
   dt_drivetrain = task(drivetrain_task);
   dt_intake = launch_task(std::bind(&intake::intake_task, &Intake));
-
-  LeftLift.stop(hold);
+  dt_intake_control = task(intake_control_task);
+  dt_ladybrown = launch_task(std::bind(&ladybrown::ladybrown_task, &Ladybrown));
+  dt_ladybrown_control = task(ladybrown_control_task);
 
   while (1) 
   {

@@ -1,8 +1,11 @@
 #pragma once
 #include "vex.h"
+#include "ladybrown.h"
 
 class intake{
 private:
+    ladybrown* m_ladybrown;
+
     vex::motor_group* m_Intake;
     vex::optical* m_Optical;
     int8_t m_currentSpeed;
@@ -14,15 +17,14 @@ private:
     bool m_runIntakeTask;
     bool m_enableColorSort = false;
 
-    std::function<int()> getLadyBrownPosition;
     int m_targetLadyBrownPosition;
     
 public:
-    intake(vex::motor_group* intakeMotors, vex::optical* ringSensor, int ringEjectPosition, std::function<int()> ladyBrownPosition, int ladyBrownTargetPosition);
+    intake(vex::motor_group* intakeMotors, vex::optical* ringSensor, int ringEjectPosition, ladybrown* ladybrown);
 
     void intake_task();
     void setSpeed(int8_t speed);
     void setBrakeType(vex::brakeType stoppingType);
     bool setColorSort(bool enable);
-    void setColor(vex::color allianceColor);
+    void setColor(bool isRed);
 };

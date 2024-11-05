@@ -112,18 +112,24 @@ public:
     selector(vex::brain::lcd* Screen, bool usePagesForColor = false);
 
     void setScreenColor(vex::color background);
-    void setPageDefaults(vex::color outlineColor, vex::color backgroundColor, vex::color textColor, vex::color selectedOutlineColor, vex::color selectedBackgroundColor, vex::color selectedTextColor, int height, int outlineThickness);
-    void setAutonDefaults(vex::color outlineColor, vex::color backgroundColor, vex::color textColor, vex::color selectedOutlineColor, vex::color selectedBackgroundColor, vex::color selectedTextColor, int width, int height, int outlineThickness);
-    void setColorDefaults(vex::color defaultOutlineColor, vex::color defaultBackgroundColor, vex::color defaultTextColor, vex::color secondaryOutlineColor, vex::color secondaryBackgroundColor, vex::color secondaryTextColor, int width, int height, int outlineThickness, bool redDefault);
+    void setPageDefaults(vex::color outlineColor, vex::color backgroundColor, vex::color textColor, vex::color selectedOutlineColor, vex::color selectedBackgroundColor, vex::color selectedTextColor, \
+        int height, int outlineThickness);
+    void setAutonDefaults(vex::color outlineColor, vex::color backgroundColor, vex::color textColor, vex::color selectedOutlineColor, vex::color selectedBackgroundColor, vex::color selectedTextColor, \
+        int width, int height, int outlineThickness);
+    void setColorDefaults(vex::color defaultOutlineColor, vex::color defaultBackgroundColor, vex::color defaultTextColor, vex::color secondaryOutlineColor, vex::color secondaryBackgroundColor, \
+        vex::color secondaryTextColor, int width, int height, int outlineThickness, bool redDefault);
 
     void addPage(const char* text);
-    void addPage(const char* text, vex::color outlineColor, vex::color backgroundColor, vex::color textColor, vex::color selectedOutlineColor, vex::color selectedBackgroundColor, vex::color selectedTextColor);
+    void addPage(const char* text, vex::color outlineColor, vex::color backgroundColor, vex::color textColor, vex::color selectedOutlineColor, vex::color selectedBackgroundColor, vex::color \
+        selectedTextColor);
 
     void addAuton(int x, int y, const char* text, const char* page, bool usePageColors = false);
-    void addAuton(int x, int y, const char* text, const char* page, vex::color outlineColor, vex::color backgroundColor, vex::color textColor, vex::color selectedOutlineColor, vex::color selectedBackgroundColor, vex::color selectedTextColor);
+    void addAuton(int x, int y, const char* text, const char* page, vex::color outlineColor, vex::color backgroundColor, vex::color textColor, vex::color selectedOutlineColor, vex::color \
+        selectedBackgroundColor, vex::color selectedTextColor);
 
     void addColor(int x, int y, const char* text, const char* page);
-    void addColor(int x, int y, const char* text, const char* page, vex::color defaultOutlineColor, vex::color defaultBackgroundColor, vex::color defaultTextColor, vex::color secondaryOutlineColor, vex::color secondaryBackgroundColor, vex::color secondaryTextColor);
+    void addColor(int x, int y, const char* text, const char* page, vex::color defaultOutlineColor, vex::color defaultBackgroundColor, vex::color defaultTextColor, vex::color secondaryOutlineColor, \
+        vex::color secondaryBackgroundColor, vex::color secondaryTextColor);
 
     void addBreak(int x, int y, const char* text, const char* page, vex::color outlineColor, vex::color backgroundColor, vex::color textColor);
 
