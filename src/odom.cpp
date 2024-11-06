@@ -196,8 +196,10 @@ void odometry::startTracking(float initialX, float initialY, float initialHeadin
             localY = changeInVerticalPosition;
         }
         else {
-            localX = 2 * sinf(convertToRadians(m_Inertial->rotation(vex::rotationUnits::deg))) * ((changeInHorizontalPosition / changeInRotation) + m_horizontalTrackingWheel.getDistanceFromTrackingCenter());
-            localY = 2 * sinf(convertToRadians(m_Inertial->rotation(vex::rotationUnits::deg))) * ((changeInVerticalPosition / changeInRotation) + m_verticalTrackingWheel.getDistanceFromTrackingCenter());
+            localX = 2 * sinf(convertToRadians(m_Inertial->rotation(vex::rotationUnits::deg))) * ((changeInHorizontalPosition / changeInRotation) + \
+                m_horizontalTrackingWheel.getDistanceFromTrackingCenter());
+            localY = 2 * sinf(convertToRadians(m_Inertial->rotation(vex::rotationUnits::deg))) * ((changeInVerticalPosition / changeInRotation) + \
+                m_verticalTrackingWheel.getDistanceFromTrackingCenter());
         }
 
         float averageRotation = convertToRadians(m_Inertial->rotation(vex::rotationUnits::deg)) - (changeInRotation / 2);

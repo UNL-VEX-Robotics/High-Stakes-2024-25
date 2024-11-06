@@ -47,12 +47,17 @@ inertial Inertial = inertial(PORT4);
 optical Optical = optical(PORT20);
 potV2 LiftPotentiometer = potV2(Brain.ThreeWirePort.A);
 
+pnuematic MogoClamp = pnuematic(Brain.ThreeWirePort.B);
+pnuematic ClimbClamp = pnuematic(Brain.ThreeWirePort.C);
+pnuematic IntakePiston = pnuematic(Brain.ThreeWirePort.D);
+
 /* ---------- Tasks ---------- */
 vex::task dt_drivetrain;
 vex::task dt_intake;
 vex::task dt_intake_control;
 vex::task dt_ladybrown;
 vex::task dt_ladybrown_control;
+vex::task dt_pnuematic_control;
 
 vex::task at_intake;
 vex::task at_ladybrown;
@@ -77,6 +82,7 @@ vex::task launch_task(F&& function) {
 }
 
 /* ---------- Objects ---------- */
+Graph graph = Graph(&Brain.Screen);
 ladybrown Ladybrown = ladybrown(&LiftGroup, 0, 0, 0, 0);
 intake Intake = intake(&IntakeGroup, &Optical, 1920, &Ladybrown);
 odometry Odom = odometry(odometry::odometry_pod(odometry::odometry_pod::VERTICAL, &LeftFront, 5.65625, 0.0212712), odometry::odometry_pod(), &Inertial);
@@ -123,24 +129,21 @@ void pre_auton(void)
   Brain.Screen.setPenColor(red);
   Brain.Screen.newLine();
   
-  if(!LeftFront.installed()) Brain.Screen.print("Left Front Drive Motor Disconnected!");
-  if(!LeftMiddle.installed()) Brain.Screen.print("Left Middle Drive Motor Disconnected!");
-  if(!LeftTop.installed()) Brain.Screen.print("Left Top Drive Motor Disconnected!");
-  if(!LeftBack.installed()) Brain.Screen.print("Left Back Drive Motor Disconnected!");
+  if(!LeftFront.installed()) Brain.Screen.print("Left Front Drive Motor Disconnected! \n");
+  if(!LeftMiddle.installed()) Brain.Screen.print("Left Middle Drive Motor Disconnected! \n");
+  if(!LeftTop.installed()) Brain.Screen.print("Left Top Drive Motor Disconnected! \n");
+  if(!LeftBack.installed()) Brain.Screen.print("Left Back Drive Motor Disconnected! \n");
   
-  if(!RightFront.installed()) Brain.Screen.print("Right Front Drive Motor Disconnected!");
-  if(!RightMiddle.installed()) Brain.Screen.print("Right Middle Drive Motor Disconnected!");
-  if(!RightTop.installed()) Brain.Screen.print("Right Top Drive Motor Disconnected!");
-  if(!RightBack.installed()) Brain.Screen.print("Right Back Drive Motor Disconnected!");
+  if(!RightFront.installed()) Brain.Screen.print("Right Front Drive Motor Disconnected! \n");
+  if(!RightMiddle.installed()) Brain.Screen.print("Right Middle Drive Motor Disconnected! \n");
+  if(!RightTop.installed()) Brain.Screen.print("Right Top Drive Motor Disconnected! \n");
+  if(!RightBack.installed()) Brain.Screen.print("Right Back Drive Motor Disconnected! \n");
 
-  if(!LeftIntake.installed()) Brain.Screen.print("Left Intake Motor Disconnected!");
-  if(!LeftLift.installed()) Brain.Screen.print("Left Ladybrown Motor Disconnected!");
+  if(!LeftIntake.installed()) Brain.Screen.print("Left Intake Motor Disconnected! \n");
+  if(!LeftLift.installed()) Brain.Screen.print("Left Ladybrown Motor Disconnected! \n");
 
-  if(!Inertial.installed()) Brain.Screen.print("Inertial Sensor Disconnected!");
-  if(!Optical.installed()) Brain.Screen.print("Optical Sensor Disconnected");
-
-  //  check motor temperatures
-  
+  if(!Inertial.installed()) Brain.Screen.print("Inertial Sensor Disconnected! \n");
+  if(!Optical.installed()) Brain.Screen.print("Optical Sensor Disconnected \n");
 }
 
 /* ---------- Autonomous Functions ---------- */
@@ -157,21 +160,25 @@ void startOdometry(float initialX, float initialY, float initialHeading)
   gt_odometry = launch_task(std::bind(&odometry::startTracking, &Odom, initialX, initialY, initialHeading));
 }
 
-/**
- * @brief Stops the intake
- * 
- * @param stoppingType  the desired brakeType
- */
-void stopIntake(brakeType stoppingType = brakeType::brake)
+void skills()
 {
-  at_intake.stop();
-  LeftIntake.stop(stoppingType);
+  at_intake = launch_task(std::bind(&intake::intake_task, &Intake));
+
+  Intake.setColor(true);
+  Intake.setSpeed(100);
+  Drivetrain.driveFor(12);
+  Intake.setSpeed(0);
+  Drivetrain.driveFor(-18, 3);
+  Intake.setSpeed(100);
 }
 
 void autonomous(void) {
-  // ..........................................................................
-  // Insert autonomous user code here.
-  // ..........................................................................
+  Drivetrain.setDriveConstants(0.75, 0.005, 1, 9, 0.75, 30, -12, 12, 0.5);
+  Drivetrain.setTurnConstants(0.15, 0.01, 0.6, 15, 0.5, 50, -12, 12);
+  Drivetrain.setSwingConstants(0.2, 0.005, 0.3, 15, 0.5, 50, -12, 12);
+  Drivetrain.setArcConstants(0.25, 0.01, 0.7, 15, 0.5, 50, -12, 12);
+
+  skills();
 }
 
 /* ---------- User Control Functions ---------- */
@@ -190,6 +197,9 @@ int drivetrain_task()
   }
 }
 
+/**
+ * @brief definition for the task that controls the intake
+ */
 int intake_control_task()
 {
   bool L1_wasPressing = false;
@@ -215,6 +225,9 @@ int intake_control_task()
   }
 }
 
+/**
+ * @brief definition for the task that controls the lady brown mechanism
+ */
 int ladybrown_control_task()
 {
   bool B_wasPressing = false;
@@ -243,14 +256,35 @@ int ladybrown_control_task()
   }
 }
 
+/**
+ * @brief controls the pistons on the robot
+ */
+int pnuematic_control_task()
+{
+  bool R2_wasPressing = false;
+  bool wasEnabled = false;
+
+  while(true)
+  {
+    if(Controller1.ButtonR2.pressing() && !R2_wasPressing) MogoClamp.toggle();
+    R2_wasPressing = Controller1.ButtonR2.pressing();
+    
+    if(!Competition.isEnabled() && wasEnabled) ClimbClamp.set(true);
+    if(Competition.isEnabled() && !wasEnabled && ClimbClamp.getValue()) ClimbClamp.set(false);
+    wasEnabled = Competition.isDriverControl() && Competition.isEnabled();
+
+    task::sleep(10);
+  }
+}
+
 void usercontrol(void) 
 {
-  wait(3, seconds);
   dt_drivetrain = task(drivetrain_task);
   dt_intake = launch_task(std::bind(&intake::intake_task, &Intake));
   dt_intake_control = task(intake_control_task);
   dt_ladybrown = launch_task(std::bind(&ladybrown::ladybrown_task, &Ladybrown));
   dt_ladybrown_control = task(ladybrown_control_task);
+  dt_pnuematic_control = task(pnuematic_control_task);
 
   while (1) 
   {

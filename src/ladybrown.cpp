@@ -29,7 +29,14 @@ ladybrown::ladybrown(vex::motor_group *motorGroup, int downPosition, int readyPo
  */
 void ladybrown::setPIDConstants(float kP, float kI, float kD, float integralTolerance, float settleTolerance)
 {
-    m_PID = PID(kP, kI, kD, integralTolerance, settleTolerance, 30, -12, 12, 10);
+    PID_constants.Kp = kP;
+    PID_constants.Ki = kI;
+    PID_constants.Kd = kD;
+    PID_constants.integralTolerance = integralTolerance;
+    PID_constants.settleTolerance = settleTolerance;
+    PID_constants.settleTime = 30;
+    PID_constants.maxOutput = 12;
+    PID_constants.minOutput = -12;
 }
 
 /**
@@ -69,6 +76,7 @@ ladybrown::ladybrown_positions ladybrown::getTargetPosition()
  */
 void ladybrown::ladybrown_task()
 {
+    PID m_PID = PID(PID_constants.Kp, PID_constants.Ki, PID_constants.Kd, PID_constants.integralTolerance, PID_constants.settleTolerance, PID_constants.settleTime, PID_constants.minOutput, PID_constants.maxOutput, 10);
     m_runLadybrownTask = true;
     while(m_runLadybrownTask)
     {

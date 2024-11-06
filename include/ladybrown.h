@@ -17,7 +17,16 @@ private:
     
     int ladybrown_positionValues[4];
 
-    PID m_PID;
+    struct {
+        float Kp = 0;
+        float Ki = 0;
+        float Kd = 0;
+        float integralTolerance = 0;
+        float settleTolerance = 0;
+        float settleTime = 0;
+        float minOutput = 0;
+        float maxOutput = 0;
+    }PID_constants;
 
     ladybrown_positions m_targetPosition = DOWN;
     bool m_runLadybrownTask;
@@ -33,3 +42,4 @@ public:
     void setTarget(ladybrown_positions newTarget);
     void setCurrentPosition(int position);
 };
+

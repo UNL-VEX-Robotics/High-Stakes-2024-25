@@ -110,6 +110,9 @@ public:
     float driveToReverse(float x, float y);
     float driveToReverse(float x, float y, float driveTimeout, float turnTimeout);
 
+    std::vector<std::vector<float>> tuneDrive(float distance, float timeout, float heading, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, float maxOutput, \
+        float headingKp);
+
     /* ---------- Turn ---------- */
     float turnFor(float degrees);
     float turnFor(float degrees, float timeout);
@@ -127,6 +130,8 @@ public:
     void setTurnSpeed(float speed, vex::velocityUnits unit);
     void setTurnSpeed(float speed, vex::voltageUnits unit);
 
+    std::vector<std::vector<float>> tuneTurn(float degrees, float timeout, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, float maxOutput);
+
     /* ---------- Swing ---------- */
     float swingFor(vex::turnType direction, float degrees);
     float swingFor(vex::turnType direction, float degrees, float timeout);
@@ -137,6 +142,8 @@ public:
 
     void setSwingSpeed(vex::turnType direction, float speed, vex::velocityUnits unit);
     void setSwingSpeed(vex::turnType direction, float speed, vex::voltageUnits unit);
+
+    std::vector<std::vector<float>> tuneSwing(vex::turnType direction, float degrees, float timeout, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, float maxOutput);
 
     /* ---------- Arc ---------- */
     float arcFor(vex::turnType direction, float radius, float degrees);
@@ -150,4 +157,7 @@ public:
 
     void setArcSpeed(vex::turnType direction, float radius, float speed, vex::velocityUnits unit);
     void setArcSpeed(vex::turnType direction, float radius, float speed, vex::voltageUnits unit);
+
+    std::vector<std::vector<float>> tuneArc(vex::turnType direction, float radius, float degrees, float timeout, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, \
+        float maxOutput);
 };

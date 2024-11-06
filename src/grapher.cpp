@@ -75,14 +75,16 @@ void Graph::drawData(std::vector<std::vector<float>> data, vex::color dataColor,
 
     if(data.size() == 0) {}
     else if(data.size() == 1){
-        this->Brain_Screen->drawCircle((data.at(0).at(0) - this->minXValue) * this->xPixelsPerUnit + this->outline.minXPixel, 240 - (this->outline.minYPixel + (data.at(0).at(1) - this->minYValue) * this->yPixelsPerUnit), penThickness);
+        this->Brain_Screen->drawCircle((data.at(0).at(0) - this->minXValue) * this->xPixelsPerUnit + this->outline.minXPixel, 240 - (this->outline.minYPixel + (data.at(0).at(1) - this->minYValue) \
+            * this->yPixelsPerUnit), penThickness);
     }
     else{
         this->Brain_Screen->setPenWidth(penThickness);
 
         for(int i = 0; i < data.size() - 1; i++){
-            this->Brain_Screen->drawLine((data.at(i).at(0) - this->minXValue) * this->xPixelsPerUnit + this->outline.minXPixel, 240 - (this->outline.minYPixel + (data.at(i).at(1) - this->minYValue) * this->yPixelsPerUnit),\
-                                            (data.at(i + 1).at(0) - this->minXValue) * this->xPixelsPerUnit + this->outline.minXPixel, 240 - (this->outline.minYPixel + (data.at(i + 1).at(1) - this->minYValue) * this->yPixelsPerUnit));
+            this->Brain_Screen->drawLine((data.at(i).at(0) - this->minXValue) * this->xPixelsPerUnit + this->outline.minXPixel, 240 - (this->outline.minYPixel + (data.at(i).at(1) - this->minYValue) \
+                 * this->yPixelsPerUnit), (data.at(i + 1).at(0) - this->minXValue) * this->xPixelsPerUnit + this->outline.minXPixel, 240 - (this->outline.minYPixel + (data.at(i + 1).at(1) \
+                 - this->minYValue) * this->yPixelsPerUnit));
         }
     }
 }
@@ -135,3 +137,4 @@ void Graph::autoScale(std::vector<std::vector<float>> data){
 Graph::Graph(vex::brain::lcd* Brain_Screen){
     this->Brain_Screen = Brain_Screen;
 }
+
