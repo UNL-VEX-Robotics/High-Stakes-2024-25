@@ -82,8 +82,10 @@ private:
 public:
     /* --------- Constructor ---------- */
     chassis(std::function<std::vector<float>()> getRobotPosition, vex::motor_group* Left, vex::motor_group* Right, vex::inertial* Inertial, float trackWidth, float degreesToInches);
-    chassis(std::function<std::vector<float>()> getRobotPosition, vex::motor_group* Left, vex::motor_group* Right, vex::inertial* Inertial, vex::encoder* VerticalEncoder, float trackWidth, float degreesToInches);
-    chassis(std::function<std::vector<float>()> getRobotPosition, vex::motor_group* Left, vex::motor_group* Right, vex::inertial* Inertial, vex::rotation* VerticalRotation, float trackWidth, float degreesToInches);
+    chassis(std::function<std::vector<float>()> getRobotPosition, vex::motor_group* Left, vex::motor_group* Right, vex::inertial* Inertial, vex::encoder* VerticalEncoder, float trackWidth, \
+        float degreesToInches);
+    chassis(std::function<std::vector<float>()> getRobotPosition, vex::motor_group* Left, vex::motor_group* Right, vex::inertial* Inertial, vex::rotation* VerticalRotation, float trackWidth, \
+        float degreesToInches);
 
     /* ---------- Tune PIDs ---------- */
     void setDriveConstants(float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, float maxOutput, float headingKp = 0);
@@ -96,7 +98,8 @@ public:
     float driveFor(float distance, float timeout);
     float driveFor(float distance, float timeout, float heading);
     float driveFor(float distance, float timeout, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, float maxOutput);
-    float driveFor(float distance, float timeout, float heading, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, float maxOutput, float headingKp);
+    float driveFor(float distance, float timeout, float heading, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, float maxOutput, \
+        float headingKp);
 
     void setDriveSpeed(float speed, vex::velocityUnits unit);
     void setDriveSpeed(float speed, vex::voltageUnits unit);
@@ -106,6 +109,9 @@ public:
     float driveTo(float x, float y, float driveTimeout, float turnTimeout);
     float driveToReverse(float x, float y);
     float driveToReverse(float x, float y, float driveTimeout, float turnTimeout);
+
+    std::vector<std::vector<float>> tuneDrive(float distance, float timeout, float heading, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, float maxOutput, \
+        float headingKp);
 
     /* ---------- Turn ---------- */
     float turnFor(float degrees);
@@ -124,6 +130,8 @@ public:
     void setTurnSpeed(float speed, vex::velocityUnits unit);
     void setTurnSpeed(float speed, vex::voltageUnits unit);
 
+    std::vector<std::vector<float>> tuneTurn(float degrees, float timeout, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, float maxOutput);
+
     /* ---------- Swing ---------- */
     float swingFor(vex::turnType direction, float degrees);
     float swingFor(vex::turnType direction, float degrees, float timeout);
@@ -135,14 +143,21 @@ public:
     void setSwingSpeed(vex::turnType direction, float speed, vex::velocityUnits unit);
     void setSwingSpeed(vex::turnType direction, float speed, vex::voltageUnits unit);
 
+    std::vector<std::vector<float>> tuneSwing(vex::turnType direction, float degrees, float timeout, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, float maxOutput);
+
     /* ---------- Arc ---------- */
     float arcFor(vex::turnType direction, float radius, float degrees);
     float arcFor(vex::turnType direction, float radius, float degrees, float timeout);
-    float arcFor(vex::turnType direction, float radius, float degrees, float timeout, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, float maxOutput);
+    float arcFor(vex::turnType direction, float radius, float degrees, float timeout, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, \
+        float maxOutput);
     float arcTo(vex::turnType direction, float radius, float heading);
     float arcTo(vex::turnType direction, float radius, float heading, float timeout);
-    float arcTo(vex::turnType direction, float radius, float heading, float timeout, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, float maxOutput);
+    float arcTo(vex::turnType direction, float radius, float heading, float timeout, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, \
+        float maxOutput);
 
     void setArcSpeed(vex::turnType direction, float radius, float speed, vex::velocityUnits unit);
     void setArcSpeed(vex::turnType direction, float radius, float speed, vex::voltageUnits unit);
+
+    std::vector<std::vector<float>> tuneArc(vex::turnType direction, float radius, float degrees, float timeout, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, \
+        float maxOutput);
 };

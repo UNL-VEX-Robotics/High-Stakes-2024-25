@@ -54,6 +54,10 @@ brain Brain;
 led ClampMotor = led(Brain.ThreeWirePort.A);
 led RatchetMotor = led(Brain.ThreeWirePort.B);
 
+inertial Inertial = inertial(PORT1);
+
+odometry Odom = odometry(odometry::odometry_pod(odometry::odometry_pod::VERTICAL, &MotorGroupLeft, 5.656, 0.0212), odometry:odometry_pod(), &Inertial);
+chassis Drivetrain = chassis(std::bind(&odometry::getPosition, &Odom), &MotorGroupLeft, &MotorGroupRight, &Intertial, 11.3125, 0.0212712 ); 
 //rotation ClawRotationSensor = rotation(PORTX); 
 
 
@@ -251,10 +255,10 @@ void pre_auton(void) {
  * This function should contain the autonomous routine for the robot.
  */
 void autonomous(void) {
-    /**
-    
-    
-    */
+  Drivetrain.setDriveConstants(.75, .005, 1, 9, .75, 30, -12, 12, .5);
+  Drivetrain.setTurnConstants(.15, .01, .6, 15, .05, 50, -12, 12);
+  Drivetrain.setSwingConstants(.2, .005, .3, 15, .5, 50, -12, 12);
+  Drivetrain.setArcConstants(.25, .001, 7, 15, .5, 50, -12, 12);
 
 }
 

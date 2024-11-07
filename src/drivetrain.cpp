@@ -74,7 +74,8 @@ chassis::chassis(std::function<std::vector<float>()> getRobotPosition, vex::moto
  * @param   trackWidth          the trackwidth of the robot's drivetrain
  * @param   degreesToInches     a ratio to convert degrees to inches
  */
-chassis::chassis(std::function<std::vector<float>()> getRobotPosition, vex::motor_group *Left, vex::motor_group *Right, vex::inertial* Inertial, vex::encoder *VerticalEncoder, float trackWidth,float degreesToInches)
+chassis::chassis(std::function<std::vector<float>()> getRobotPosition, vex::motor_group *Left, vex::motor_group *Right, vex::inertial* Inertial, vex::encoder *VerticalEncoder, float trackWidth, \
+    float degreesToInches)
 {
     this->getRobotPosition = getRobotPosition;
     this->Left = Left;
@@ -97,7 +98,8 @@ chassis::chassis(std::function<std::vector<float>()> getRobotPosition, vex::moto
  * @param   trackWidth          the trackwidth of the robot's drivetrain
  * @param   degreesToInches     a ratio to convert degrees to inches
  */
-chassis::chassis(std::function<std::vector<float>()> getRobotPosition, vex::motor_group *Left, vex::motor_group *Right, vex::inertial* Inertial, vex::rotation *VerticalRotation, float trackWidth, float degreesToInches)
+chassis::chassis(std::function<std::vector<float>()> getRobotPosition, vex::motor_group *Left, vex::motor_group *Right, vex::inertial* Inertial, vex::rotation *VerticalRotation, float trackWidth, \
+    float degreesToInches)
 {
     this->getRobotPosition = getRobotPosition;
     this->Left = Left;
@@ -216,7 +218,8 @@ void chassis::setArcConstants(float Kp, float Ki, float Kd, float integralTolera
  */
 float chassis::driveFor(float distance)
 {
-    return this->driveFor(distance, INFINITY, 0, this->driveConstants.Kp, this->driveConstants.Ki, this->driveConstants.Kd, this->driveConstants.integralTolerance, this->driveConstants.settleTolerance, this->driveConstants.settleTime, this->driveConstants.minOutput, this->driveConstants.maxOutput, 0);
+    return this->driveFor(distance, INFINITY, 0, this->driveConstants.Kp, this->driveConstants.Ki, this->driveConstants.Kd, this->driveConstants.integralTolerance, \
+        this->driveConstants.settleTolerance, this->driveConstants.settleTime, this->driveConstants.minOutput, this->driveConstants.maxOutput, 0);
 }
 
 /**
@@ -229,7 +232,8 @@ float chassis::driveFor(float distance)
  */
 float chassis::driveFor(float distance, float timeout)
 {
-    return this->driveFor(distance, timeout, 0, this->driveConstants.Kp, this->driveConstants.Ki, this->driveConstants.Kd, this->driveConstants.integralTolerance, this->driveConstants.settleTolerance, this->driveConstants.settleTime, this->driveConstants.minOutput, this->driveConstants.maxOutput, 0);
+    return this->driveFor(distance, timeout, 0, this->driveConstants.Kp, this->driveConstants.Ki, this->driveConstants.Kd, this->driveConstants.integralTolerance, \
+        this->driveConstants.settleTolerance, this->driveConstants.settleTime, this->driveConstants.minOutput, this->driveConstants.maxOutput, 0);
 }
 
 /**
@@ -244,7 +248,8 @@ float chassis::driveFor(float distance, float timeout)
  */
 float chassis::driveFor(float distance, float timeout, float heading)
 {
-    return this->driveFor(distance, timeout, heading, this->driveConstants.Kp, this->driveConstants.Ki, this->driveConstants.Kd, this->driveConstants.integralTolerance, this->driveConstants.settleTolerance, this->driveConstants.settleTime, this->driveConstants.minOutput, this->driveConstants.maxOutput, this->driveConstants.headingKp);
+    return this->driveFor(distance, timeout, heading, this->driveConstants.Kp, this->driveConstants.Ki, this->driveConstants.Kd, this->driveConstants.integralTolerance, \
+        this->driveConstants.settleTolerance, this->driveConstants.settleTime, this->driveConstants.minOutput, this->driveConstants.maxOutput, this->driveConstants.headingKp);
 }
 
 /**
@@ -283,7 +288,8 @@ float chassis::driveFor(float distance, float timeout, float Kp, float Ki, float
  * @param   maxOutput           the maximum acceptable output, in volts
  * @param   headingKp           the proportional constant for the heading PID
  */
-float chassis::driveFor(float distance, float timeout, float heading, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, float maxOutput, float headingKp)
+float chassis::driveFor(float distance, float timeout, float heading, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, \
+    float maxOutput, float headingKp)
 {
     PID drivePID = PID(Kp, Ki, Kd, integralTolerance, settleTolerance, settleTime, minOutput, maxOutput, 10);
     PID turnPID = PID(headingKp, 0, 0, 0, 0, 0, minOutput, maxOutput, 10);
@@ -438,6 +444,75 @@ float chassis::driveToReverse(float x, float y, float driveTimeout, float turnTi
 }
 
 /**
+ * Function meant to be used when tuning the drive PID
+ * 
+ * @param   distance            the distance to be driven, in inches
+ * @param   timeout             the time before the drive gives up, in seconds
+ * @param   heading             the desired heading for the robot to hold
+ * @param   Kp                  the proportional constant
+ * @param   Ki                  the integral constant
+ * @param   Kd                  the derivative constant
+ * @param   integralTolerance   the tolerance range for the integral to grow, in inches
+ * @param   settleTolerance     the tolerance range for the PID to be considered settled, in inches
+ * @param   settleTime          the amount of time the error must be within the settleTolerance before it is truly settled, in seconds
+ * @param   minOutput           the minimum acceptable output, in volts
+ * @param   maxOutput           the maximum acceptable output, in volts
+ * @param   headingKp           the proportional constant for the heading PID
+ * 
+ * @return the data in (time, error) format
+ */
+std::vector<std::vector<float>> chassis::tuneDrive(float distance, float timeout, float heading, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, float maxOutput, float headingKp)
+{
+    PID drivePID = PID(Kp, Ki, Kd, integralTolerance, settleTolerance, settleTime, minOutput, maxOutput, 10);
+    PID turnPID = PID(headingKp, 0, 0, 0, 0, 0, minOutput, maxOutput, 10);
+
+    float initialPosition;
+    if(this->trackingType == chassis::verticalTracking::rotation) initialPosition = this->VerticalRotation->position(vex::rotationUnits::deg) * this->degreesToInches;
+    else if(this->trackingType == chassis::verticalTracking::encoder) initialPosition = this->VerticalEncoder->position(vex::rotationUnits::deg) * this->degreesToInches;
+    else initialPosition = this->Left->position(vex::rotationUnits::deg) * this->degreesToInches;
+
+    float t = 0;
+    std::vector<std::vector<float>> errorData;
+    while(!drivePID.isSettled() && t < timeout){
+        float currentPosition;
+        if(this->trackingType == chassis::verticalTracking::rotation) currentPosition = this->VerticalRotation->position(vex::rotationUnits::deg) * this->degreesToInches;
+        else if(this->trackingType == chassis::verticalTracking::encoder) currentPosition = this->VerticalEncoder->position(vex::rotationUnits::deg) * this->degreesToInches;
+        else currentPosition = this->Left->position(vex::rotationUnits::deg) * this->degreesToInches;
+
+        float driveError = distance - (currentPosition - initialPosition);
+        float headingError = this->restrain(this->Inertial->heading(vex::rotationUnits::deg) - heading, -180, 180);
+        errorData.push_back({t, driveError});
+
+        float driveOutput = drivePID.getOutput(driveError);
+        float turnOutput = turnPID.getOutput(headingError);
+
+        this->Left->spin(vex::directionType::fwd, this->clamp(driveOutput + turnOutput, minOutput, maxOutput), vex::voltageUnits::volt);
+        this->Right->spin(vex::directionType::fwd, this->clamp(driveOutput - turnOutput, minOutput, maxOutput), vex::voltageUnits::volt);
+
+        vex::task::sleep(10);
+        t += 0.01;
+    }
+
+    for (int i = 0; i < 50; i++)
+    {
+        float currentPosition;
+        if(this->trackingType == chassis::verticalTracking::rotation) currentPosition = this->VerticalRotation->position(vex::rotationUnits::deg) * this->degreesToInches;
+        else if(this->trackingType == chassis::verticalTracking::encoder) currentPosition = this->VerticalEncoder->position(vex::rotationUnits::deg) * this->degreesToInches;
+        else currentPosition = this->Left->position(vex::rotationUnits::deg) * this->degreesToInches;
+
+        float driveError = distance - (currentPosition - initialPosition);
+        errorData.push_back({t, driveError});
+
+        vex::task::sleep(10);
+        t += 0.01;
+    }
+
+    this->stopDrive(vex::brakeType::hold);
+
+    return errorData;
+}
+
+/**
  * Turns for a specified number of degrees using a PID without a timeout
  * 
  * @param   degrees the number of degres to be turned
@@ -446,7 +521,8 @@ float chassis::driveToReverse(float x, float y, float driveTimeout, float turnTi
  */
 float chassis::turnFor(float degrees)
 {
-    return this->turnFor(degrees, INFINITY, this->turnConstants.Kp, this->turnConstants.Ki, this->turnConstants.Kd, this->turnConstants.integralTolerance, this->turnConstants.settleTolerance, this->turnConstants.settleTime, this->turnConstants.minOutput, this->turnConstants.maxOutput);
+    return this->turnFor(degrees, INFINITY, this->turnConstants.Kp, this->turnConstants.Ki, this->turnConstants.Kd, this->turnConstants.integralTolerance, this->turnConstants.settleTolerance, \
+        this->turnConstants.settleTime, this->turnConstants.minOutput, this->turnConstants.maxOutput);
 }
 
 /**
@@ -459,7 +535,8 @@ float chassis::turnFor(float degrees)
  */
 float chassis::turnFor(float degrees, float timeout)
 {
-    return this->turnFor(degrees, timeout, this->turnConstants.Kp, this->turnConstants.Ki, this->turnConstants.Kd, this->turnConstants.integralTolerance, this->turnConstants.settleTolerance, this->turnConstants.settleTime, this->turnConstants.minOutput, this->turnConstants.maxOutput);
+    return this->turnFor(degrees, timeout, this->turnConstants.Kp, this->turnConstants.Ki, this->turnConstants.Kd, this->turnConstants.integralTolerance, this->turnConstants.settleTolerance, \
+        this->turnConstants.settleTime, this->turnConstants.minOutput, this->turnConstants.maxOutput);
 }
 
 /**
@@ -509,7 +586,8 @@ float chassis::turnFor(float degrees, float timeout, float Kp, float Ki, float K
  */
 float chassis::turnTo(float heading)
 {
-    return turnTo(heading, INFINITY, this->turnConstants.Kp, this->turnConstants.Ki, this->turnConstants.Kd, this->turnConstants.integralTolerance, this->turnConstants.settleTolerance, this->turnConstants.settleTime, this->turnConstants.minOutput, this->turnConstants.maxOutput);
+    return turnTo(heading, INFINITY, this->turnConstants.Kp, this->turnConstants.Ki, this->turnConstants.Kd, this->turnConstants.integralTolerance, this->turnConstants.settleTolerance, \
+        this->turnConstants.settleTime, this->turnConstants.minOutput, this->turnConstants.maxOutput);
 }
 
 /**
@@ -522,7 +600,8 @@ float chassis::turnTo(float heading)
  */
 float chassis::turnTo(float heading, float timeout)
 {
-    return turnTo(heading, timeout, this->turnConstants.Kp, this->turnConstants.Ki, this->turnConstants.Kd, this->turnConstants.integralTolerance, this->turnConstants.settleTolerance, this->turnConstants.settleTime, this->turnConstants.minOutput, this->turnConstants.maxOutput);
+    return turnTo(heading, timeout, this->turnConstants.Kp, this->turnConstants.Ki, this->turnConstants.Kd, this->turnConstants.integralTolerance, this->turnConstants.settleTolerance, \
+        this->turnConstants.settleTime, this->turnConstants.minOutput, this->turnConstants.maxOutput);
 }
 
 /**
@@ -575,7 +654,8 @@ float chassis::turnToPosition(float x, float y)
     std::vector<float> robotPosition = this->getRobotPosition();
     float targetHeading = this->radToDeg(atan2f(robotPosition.at(0) - x, robotPosition.at(1) - y));
 
-    return turnTo(targetHeading, INFINITY, this->turnConstants.Kp, this->turnConstants.Ki, this->turnConstants.Kd, this->turnConstants.integralTolerance, this->turnConstants.settleTolerance, this->turnConstants.settleTime, this->turnConstants.minOutput, this->turnConstants.maxOutput);
+    return turnTo(targetHeading, INFINITY, this->turnConstants.Kp, this->turnConstants.Ki, this->turnConstants.Kd, this->turnConstants.integralTolerance, this->turnConstants.settleTolerance, \
+        this->turnConstants.settleTime, this->turnConstants.minOutput, this->turnConstants.maxOutput);
 }
 
 /**
@@ -592,7 +672,8 @@ float chassis::turnToPosition(float x, float y, float timeout)
     std::vector<float> robotPosition = this->getRobotPosition();
     float targetHeading = this->radToDeg(atan2f(robotPosition.at(0) - x, robotPosition.at(1) - y));
 
-    return turnTo(targetHeading, timeout, this->turnConstants.Kp, this->turnConstants.Ki, this->turnConstants.Kd, this->turnConstants.integralTolerance, this->turnConstants.settleTolerance, this->turnConstants.settleTime, this->turnConstants.minOutput, this->turnConstants.maxOutput);
+    return turnTo(targetHeading, timeout, this->turnConstants.Kp, this->turnConstants.Ki, this->turnConstants.Kd, this->turnConstants.integralTolerance, this->turnConstants.settleTolerance, \
+        this->turnConstants.settleTime, this->turnConstants.minOutput, this->turnConstants.maxOutput);
 }
 
 /**
@@ -633,7 +714,8 @@ float chassis::turnToPositionReverse(float x, float y)
     std::vector<float> robotPosition = this->getRobotPosition();
     float targetHeading = this->radToDeg(atan2f(robotPosition.at(0) - x, robotPosition.at(1) - y)) + 180;
 
-    return turnTo(targetHeading, INFINITY, this->turnConstants.Kp, this->turnConstants.Ki, this->turnConstants.Kd, this->turnConstants.integralTolerance, this->turnConstants.settleTolerance, this->turnConstants.settleTime, this->turnConstants.minOutput, this->turnConstants.maxOutput);
+    return turnTo(targetHeading, INFINITY, this->turnConstants.Kp, this->turnConstants.Ki, this->turnConstants.Kd, this->turnConstants.integralTolerance, this->turnConstants.settleTolerance, \
+        this->turnConstants.settleTime, this->turnConstants.minOutput, this->turnConstants.maxOutput);
 }
 
 /**
@@ -650,7 +732,8 @@ float chassis::turnToPositionReverse(float x, float y, float timeout)
     std::vector<float> robotPosition = this->getRobotPosition();
     float targetHeading = this->radToDeg(atan2f(robotPosition.at(0) - x, robotPosition.at(1) - y)) + 180;
 
-    return turnTo(targetHeading, timeout, this->turnConstants.Kp, this->turnConstants.Ki, this->turnConstants.Kd, this->turnConstants.integralTolerance, this->turnConstants.settleTolerance, this->turnConstants.settleTime, this->turnConstants.minOutput, this->turnConstants.maxOutput);
+    return turnTo(targetHeading, timeout, this->turnConstants.Kp, this->turnConstants.Ki, this->turnConstants.Kd, this->turnConstants.integralTolerance, this->turnConstants.settleTolerance, \
+        this->turnConstants.settleTime, this->turnConstants.minOutput, this->turnConstants.maxOutput);
 }
 
 /**
@@ -678,6 +761,56 @@ void chassis::setTurnSpeed(float speed, vex::voltageUnits unit)
 }
 
 /**
+ * Function used for tuning the turnPID
+ * 
+ * @param   degrees             the number of degrees to be turned
+ * @param   timeout             the time before the PID gives up, in seconds
+ * @param   Kp                  the proportional constant
+ * @param   Ki                  the integral constant
+ * @param   Kd                  the derivative constant
+ * @param   integralTolerance   the tolerance range for the integral to grow, in degrees
+ * @param   settleTolerance     the tolerance range for the PID to be considered settled, in degrees
+ * @param   settleTime          the amount of time the error must be within the settleTolerance before it is truly settled, in seconds
+ * @param   minOutput           the minimum acceptable output, in volts
+ * @param   maxOutput           the maximum acceptable output, in volts
+ * 
+ * @return  the data in (time, error) format
+ */
+std::vector<std::vector<float>> chassis::tuneTurn(float degrees, float timeout, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, float maxOutput)
+{
+    PID turnPID = PID(Kp, Ki, Kd, integralTolerance, settleTolerance, settleTime, minOutput, maxOutput, 10);
+    float targetRotation = this->Inertial->rotation(vex::rotationUnits::deg) + degrees;
+
+    std::vector<std::vector<float>> errorData;
+    float t = 0;
+    while(!turnPID.isSettled() && t < timeout){
+        float error = targetRotation - this->Inertial->rotation(vex::rotationUnits::deg);
+        float output = turnPID.getOutput(error);
+
+        errorData.push_back({t, error});
+
+        this->Left->spin(vex::directionType::fwd, output, vex::voltageUnits::volt);
+        this->Right->spin(vex::directionType::rev, output, vex::voltageUnits::volt);
+
+        vex::task::sleep(10);
+        t += 0.01;
+    }
+
+    this->stopDrive(vex::brakeType::hold);
+
+    for(int i = 0; i < 50; i++)
+    {
+        float error = targetRotation - this->Inertial->rotation(vex::rotationUnits::deg);
+        errorData.push_back({t, error});
+
+        vex::task::sleep(10);
+        t += 0.01;
+    }
+
+    return errorData;
+}
+
+/**
  * Swings for a specified number of degrees in the specified direction using a PID without a timeout
  * A swing sets one side of the drivetrain to hold and the other receieves power
  * 
@@ -688,7 +821,8 @@ void chassis::setTurnSpeed(float speed, vex::voltageUnits unit)
  */
 float chassis::swingFor(vex::turnType direction, float degrees)
 {
-    return this->swingFor(direction, degrees, INFINITY, this->swingConstants.Kp, this->swingConstants.Ki, this->swingConstants.Kd, this->swingConstants.integralTolerance, this->swingConstants.settleTolerance, this->swingConstants.settleTime, this->swingConstants.minOutput, this->swingConstants.maxOutput);
+    return this->swingFor(direction, degrees, INFINITY, this->swingConstants.Kp, this->swingConstants.Ki, this->swingConstants.Kd, this->swingConstants.integralTolerance, \
+        this->swingConstants.settleTolerance, this->swingConstants.settleTime, this->swingConstants.minOutput, this->swingConstants.maxOutput);
 }
 
 /**
@@ -703,7 +837,8 @@ float chassis::swingFor(vex::turnType direction, float degrees)
  */
 float chassis::swingFor(vex::turnType direction, float degrees, float timeout)
 {
-    return this->swingFor(direction, degrees, timeout, this->swingConstants.Kp, this->swingConstants.Ki, this->swingConstants.Kd, this->swingConstants.integralTolerance, this->swingConstants.settleTolerance, this->swingConstants.settleTime, this->swingConstants.minOutput, this->swingConstants.maxOutput);
+    return this->swingFor(direction, degrees, timeout, this->swingConstants.Kp, this->swingConstants.Ki, this->swingConstants.Kd, this->swingConstants.integralTolerance, \
+        this->swingConstants.settleTolerance, this->swingConstants.settleTime, this->swingConstants.minOutput, this->swingConstants.maxOutput);
 }
 
 /**
@@ -724,7 +859,8 @@ float chassis::swingFor(vex::turnType direction, float degrees, float timeout)
  * 
  * @return  the time it takes for the PID to settle or time out
  */
-float chassis::swingFor(vex::turnType direction, float degrees, float timeout, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, float maxOutput)
+float chassis::swingFor(vex::turnType direction, float degrees, float timeout, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, \
+    float minOutput, float maxOutput)
 {
     PID swingPID = PID(Kp, Ki, Kd, integralTolerance, settleTolerance, settleTime, minOutput, maxOutput, 10);
 
@@ -774,7 +910,8 @@ float chassis::swingFor(vex::turnType direction, float degrees, float timeout, f
  */
 float chassis::swingTo(vex::turnType direction, float heading)
 {
-    return this->swingTo(direction, heading, INFINITY, this->swingConstants.Kp, this->swingConstants.Ki, this->swingConstants.Kd, this->swingConstants.integralTolerance, this->swingConstants.settleTolerance, this->swingConstants.settleTime, this->swingConstants.minOutput, this->swingConstants.maxOutput);
+    return this->swingTo(direction, heading, INFINITY, this->swingConstants.Kp, this->swingConstants.Ki, this->swingConstants.Kd, this->swingConstants.integralTolerance, \
+        this->swingConstants.settleTolerance, this->swingConstants.settleTime, this->swingConstants.minOutput, this->swingConstants.maxOutput);
 }
 
 /**
@@ -789,7 +926,8 @@ float chassis::swingTo(vex::turnType direction, float heading)
  */
 float chassis::swingTo(vex::turnType direction, float heading, float timeout)
 {
-    return this->swingTo(direction, heading, timeout, this->swingConstants.Kp, this->swingConstants.Ki, this->swingConstants.Kd, this->swingConstants.integralTolerance, this->swingConstants.settleTolerance, this->swingConstants.settleTime, this->swingConstants.minOutput, this->swingConstants.maxOutput);
+    return this->swingTo(direction, heading, timeout, this->swingConstants.Kp, this->swingConstants.Ki, this->swingConstants.Kd, this->swingConstants.integralTolerance, \
+        this->swingConstants.settleTolerance, this->swingConstants.settleTime, this->swingConstants.minOutput, this->swingConstants.maxOutput);
 }
 
 /**
@@ -810,7 +948,8 @@ float chassis::swingTo(vex::turnType direction, float heading, float timeout)
  * 
  * @return  the time it takes for the PID to settle or time out
  */
-float chassis::swingTo(vex::turnType direction, float heading, float timeout, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, float maxOutput)
+float chassis::swingTo(vex::turnType direction, float heading, float timeout, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, \
+    float minOutput, float maxOutput)
 {
     PID swingPID = PID(Kp, Ki, Kd, integralTolerance, settleTolerance, settleTime, minOutput, maxOutput, 10);
 
@@ -884,6 +1023,81 @@ void chassis::setSwingSpeed(vex::turnType direction, float speed, vex::voltageUn
 }
 
 /**
+ * Function for tuning a swing PID
+ * 
+ * @param   direction           the direction of the swing
+ * @param   degrees             the desired number of degrees
+ * @param   timeout             the time before the PID gives up, in seconds
+ * @param   Kp                  the proportional constant
+ * @param   Ki                  the integral constant
+ * @param   Kd                  the derivative constant
+ * @param   integralTolerance   the tolerance range for the integral to grow, in degrees
+ * @param   settleTolerance     the tolerance range for the PID to be considered settled, in degrees
+ * @param   settleTime          the amount of time the error must be within the settleTolerance before it is truly settled, in seconds
+ * @param   minOutput           the minimum acceptable output, in volts
+ * @param   maxOutput           the maximum acceptable output, in volts
+ * 
+ * @return  the data in (time, error) format
+ */
+std::vector<std::vector<float>> chassis::tuneSwing(vex::turnType direction, float degrees, float timeout, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, float maxOutput)
+{
+    PID swingPID = PID(Kp, Ki, Kd, integralTolerance, settleTolerance, settleTime, minOutput, maxOutput, 10);
+
+    std::vector<std::vector<float>> errorData;
+
+    float targetRotation;
+    float t = 0;
+    if(direction == vex::turnType::right){
+        targetRotation = this->Inertial->rotation(vex::rotationUnits::deg) + degrees;
+        
+        this->Right->stop(vex::brakeType::hold);
+        while(!swingPID.isSettled() && t < timeout){
+            float error = targetRotation - this->Inertial->rotation(vex::rotationUnits::deg);
+            float output = swingPID.getOutput(error);
+
+            errorData.push_back({t, error});
+
+            this->Left->spin(vex::directionType::fwd, output, vex::voltageUnits::volt);
+
+            vex::task::sleep(10);
+            t += 0.01;
+        }
+    }
+    else{
+        targetRotation = this->Inertial->rotation(vex::rotationUnits::deg) - degrees;
+
+        this->Left->stop(vex::brakeType::hold);
+        while(!swingPID.isSettled() && t < timeout){
+            float error = this->Inertial->rotation(vex::rotationUnits::deg) - targetRotation;
+            float output = swingPID.getOutput(error);
+
+            errorData.push_back({t, error});
+
+            this->Right->spin(vex::directionType::fwd, output, vex::voltageUnits::volt);
+
+            vex::task::sleep(10);
+            t += 0.01;
+        }
+    }
+
+    this->stopDrive(vex::brakeType::hold);
+
+    for(int i = 0; i < 50; i++)
+    {
+        float error;
+        if(direction == vex::turnType::right) error = targetRotation - this->Inertial->rotation(vex::rotationUnits::deg);
+        else error = this->Inertial->rotation(vex::rotationUnits::deg) - targetRotation;
+
+        errorData.push_back({t, error});
+
+        vex::task::sleep(10);
+        t += 0.01;
+    }
+
+    return errorData;
+}
+
+/**
  * Arcs for a specified number of degrees in a specified direction at a specified radius using a PID without a timeout
  * 
  * @param   direction   the desired direction
@@ -894,7 +1108,8 @@ void chassis::setSwingSpeed(vex::turnType direction, float speed, vex::voltageUn
  */
 float chassis::arcFor(vex::turnType direction, float radius, float degrees)
 {
-    return this->arcFor(direction, radius, degrees, INFINITY, this->arcConstants.Kp, this->arcConstants.Ki, this->arcConstants.Kd, this->arcConstants.integralTolerance, this->arcConstants.settleTolerance, this->arcConstants.settleTime, this->arcConstants.minOutput, this->arcConstants.maxOutput);
+    return this->arcFor(direction, radius, degrees, INFINITY, this->arcConstants.Kp, this->arcConstants.Ki, this->arcConstants.Kd, this->arcConstants.integralTolerance, \
+        this->arcConstants.settleTolerance, this->arcConstants.settleTime, this->arcConstants.minOutput, this->arcConstants.maxOutput);
 }
 
 /**
@@ -909,7 +1124,8 @@ float chassis::arcFor(vex::turnType direction, float radius, float degrees)
  */
 float chassis::arcFor(vex::turnType direction, float radius, float degrees, float timeout)
 {
-    return this->arcFor(direction, radius, degrees, timeout, this->arcConstants.Kp, this->arcConstants.Ki, this->arcConstants.Kd, this->arcConstants.integralTolerance, this->arcConstants.settleTolerance, this->arcConstants.settleTime, this->arcConstants.minOutput, this->arcConstants.maxOutput);
+    return this->arcFor(direction, radius, degrees, timeout, this->arcConstants.Kp, this->arcConstants.Ki, this->arcConstants.Kd, this->arcConstants.integralTolerance, \
+        this->arcConstants.settleTolerance, this->arcConstants.settleTime, this->arcConstants.minOutput, this->arcConstants.maxOutput);
 }
 
 /**
@@ -930,7 +1146,8 @@ float chassis::arcFor(vex::turnType direction, float radius, float degrees, floa
  * 
  * @return  the time it takes for the PID to settle or time out
  */
-float chassis::arcFor(vex::turnType direction, float radius, float degrees, float timeout, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, float maxOutput)
+float chassis::arcFor(vex::turnType direction, float radius, float degrees, float timeout, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, \
+    float minOutput, float maxOutput)
 {
     PID arcPID = PID(Kp, Ki, Kd, integralTolerance, settleTolerance, settleTime, minOutput, maxOutput, 10);
     float multiplier = (radius - trackWidth/2) / (radius + trackWidth/2);
@@ -981,7 +1198,8 @@ float chassis::arcFor(vex::turnType direction, float radius, float degrees, floa
  */
 float chassis::arcTo(vex::turnType direction, float radius, float heading)
 {
-    return this->arcTo(direction, radius, heading, INFINITY, this->arcConstants.Kp, this->arcConstants.Ki, this->arcConstants.Kd, this->arcConstants.integralTolerance, this->arcConstants.settleTolerance, this->arcConstants.settleTime, this->arcConstants.minOutput, this->arcConstants.maxOutput);
+    return this->arcTo(direction, radius, heading, INFINITY, this->arcConstants.Kp, this->arcConstants.Ki, this->arcConstants.Kd, this->arcConstants.integralTolerance, \
+        this->arcConstants.settleTolerance, this->arcConstants.settleTime, this->arcConstants.minOutput, this->arcConstants.maxOutput);
 }
 
 /**
@@ -996,7 +1214,8 @@ float chassis::arcTo(vex::turnType direction, float radius, float heading)
  */
 float chassis::arcTo(vex::turnType direction, float radius, float heading, float timeout)
 {
-    return this->arcTo(direction, radius, heading, timeout, this->arcConstants.Kp, this->arcConstants.Ki, this->arcConstants.Kd, this->arcConstants.integralTolerance, this->arcConstants.settleTolerance, this->arcConstants.settleTime, this->arcConstants.minOutput, this->arcConstants.maxOutput);
+    return this->arcTo(direction, radius, heading, timeout, this->arcConstants.Kp, this->arcConstants.Ki, this->arcConstants.Kd, this->arcConstants.integralTolerance, \
+        this->arcConstants.settleTolerance, this->arcConstants.settleTime, this->arcConstants.minOutput, this->arcConstants.maxOutput);
 }
 
 /**
@@ -1017,7 +1236,8 @@ float chassis::arcTo(vex::turnType direction, float radius, float heading, float
  * 
  * @return  the time it takes for the PID to settle or time out
  */
-float chassis::arcTo(vex::turnType direction, float radius, float heading, float timeout, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, float maxOutput)
+float chassis::arcTo(vex::turnType direction, float radius, float heading, float timeout, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, \
+    float minOutput, float maxOutput)
 {
     PID arcPID = PID(Kp, Ki, Kd, integralTolerance, settleTolerance, settleTime, minOutput, maxOutput, 10);
     float multiplier = (radius - trackWidth/2) / (radius + trackWidth/2);
@@ -1093,4 +1313,80 @@ void chassis::setArcSpeed(vex::turnType direction, float radius, float speed, ve
         this->Left->spin(vex::directionType::fwd, multiplier * speed, unit);
         this->Right->spin(vex::directionType::fwd, speed, unit);
     }
+}
+
+/**
+ * Function for tuning an arc PID
+ * 
+ * @param   direction           the direction of the arc
+ * @param   radius              the radius of the arc
+ * @param   degrees             the number of degrees
+ * @param   timeout             the time before the PID gives up, in seconds
+ * @param   Kp                  the proportional constant
+ * @param   Ki                  the integral constant
+ * @param   Kd                  the derivative constant
+ * @param   integralTolerance   the tolerance range for the integral to grow, in degrees
+ * @param   settleTolerance     the tolerance range for the PID to be considered settled, in degrees
+ * @param   settleTime          the amount of time the error must be within the settleTolerance before it is truly settled, in seconds
+ * @param   minOutput           the minimum acceptable output, in volts
+ * @param   maxOutput           the maximum acceptable output, in volts
+ * 
+ * @return  the data in (time, error) format
+ */
+std::vector<std::vector<float>> chassis::tuneArc(vex::turnType direction, float radius, float degrees, float timeout, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, float maxOutput)
+{
+    PID arcPID = PID(Kp, Ki, Kd, integralTolerance, settleTolerance, settleTime, minOutput, maxOutput, 10);
+    float multiplier = (radius - trackWidth/2) / (radius + trackWidth/2);
+    float targetRotation;
+
+    std::vector<std::vector<float>> errorData;
+    float t = 0;
+    if(direction == vex::turnType::right){
+        targetRotation = this->Inertial->rotation(vex::rotationUnits::deg) + degrees;
+
+        while(!arcPID.isSettled() && t < timeout){
+            float error = targetRotation - this->Inertial->rotation(vex::rotationUnits::deg);
+            float output = arcPID.getOutput(error);
+
+            errorData.push_back({t, error});
+
+            this->Left->spin(vex::directionType::fwd, output, vex::voltageUnits::volt);
+            this->Right->spin(vex::directionType::fwd, multiplier * output, vex::voltageUnits::volt);
+
+            vex::task::sleep(10);
+            t += 0.01;
+        }
+    }
+    else{
+        targetRotation = this->Inertial->rotation(vex::rotationUnits::deg) - degrees;
+
+        while(!arcPID.isSettled() && t < timeout){
+            float error = this->Inertial->rotation(vex::rotationUnits::deg) - targetRotation;
+            float output = arcPID.getOutput(error);
+
+            errorData.push_back({t, error});
+
+            this->Left->spin(vex::directionType::fwd, multiplier * output, vex::voltageUnits::volt);
+            this->Right->spin(vex::directionType::fwd, output, vex::voltageUnits::volt);
+
+            vex::task::sleep(10);
+            t += 0.01;
+        }
+    }
+
+    this->stopDrive(vex::brakeType::hold);
+
+    for(int i = 0; i < 50; i++)
+    {
+        float error;
+        if(direction == vex::turnType::right) error = targetRotation - this->Inertial->rotation(vex::rotationUnits::deg);
+        else error = this->Inertial->rotation(vex::rotationUnits::deg) - targetRotation;
+
+        errorData.push_back({t, error});
+
+        vex::task::sleep(10);
+        t += 0.01;
+    }
+
+    return errorData;
 }
