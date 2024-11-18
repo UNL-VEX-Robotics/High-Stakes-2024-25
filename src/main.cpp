@@ -14,7 +14,7 @@
 #include "auton-selector.h"
 #include "intake.h"
 #include "pnuematics.h"
-
+ 
 using namespace vex;
 
 // A global instance of competition
@@ -35,21 +35,24 @@ motor LeftTop = motor(PORT9, ratio6_1, false);
 motor LeftBack = motor(PORT19, ratio6_1, true);
 
 motor LeftIntake = motor(PORT7, ratio18_1, false);
-motor_group IntakeGroup = motor_group(LeftIntake);
+motor RightIntake = motor(PORT14, ratio18_1, true);
+motor_group IntakeGroup = motor_group(LeftIntake, RightIntake);
 
 motor LeftLift = motor(PORT8, ratio36_1, true);
-motor_group LiftGroup = motor_group(LeftLift);
+motor RightLift = motor(PORT12, ratio36_1, false);
+motor_group LiftGroup = motor_group(LeftLift, RightLift);
 
 motor_group Right = motor_group(RightFront, RightMiddle, RightTop, RightBack);
 motor_group Left = motor_group(LeftFront, LeftMiddle, LeftTop, LeftBack);
 
 inertial Inertial = inertial(PORT4);
-optical Optical = optical(PORT20);
-potV2 LiftPotentiometer = potV2(Brain.ThreeWirePort.A);
+optical Optical = optical(PORT15);
+distance Distance = distance(PORT13);
+potV2 LiftPotentiometer = potV2(Brain.ThreeWirePort.G);
 
-pnuematic MogoClamp = pnuematic(Brain.ThreeWirePort.B);
-pnuematic ClimbClamp = pnuematic(Brain.ThreeWirePort.C);
-pnuematic IntakePiston = pnuematic(Brain.ThreeWirePort.D);
+
+led MogoClamp = led(Brain.ThreeWirePort.H);
+
 
 /* ---------- Tasks ---------- */
 vex::task dt_drivetrain;
@@ -83,8 +86,9 @@ vex::task launch_task(F&& function) {
 
 /* ---------- Objects ---------- */
 Graph graph = Graph(&Brain.Screen);
-ladybrown Ladybrown = ladybrown(&LiftGroup, 0, 0, 0, 0);
+ladybrown Ladybrown = ladybrown(&LiftGroup, -145, -30, 100, 0);
 intake Intake = intake(&IntakeGroup, &Optical, 1920, &Ladybrown);
+
 odometry Odom = odometry(odometry::odometry_pod(odometry::odometry_pod::VERTICAL, &LeftFront, 5.65625, 0.0212712), odometry::odometry_pod(), &Inertial);
 chassis Drivetrain = chassis(std::bind(&odometry::getPosition, &Odom), &Left, &Right, &Inertial, 11.3125, 0.0212712);
 
@@ -117,7 +121,16 @@ void pre_auton(void)
     task::sleep(50);
   } while (Inertial.isCalibrating());
 
-  //  Set all PID constants
+  Ladybrown.setCurrentPosition(LiftPotentiometer.angle());
+
+  //PIDs
+  Drivetrain.setDriveConstants(0.75, 0.005, 1, 9, 0.75, 30, -12, 12, 0.5);
+  Drivetrain.setTurnConstants(0.15, 0.01, 0.6, 15, 0.5, 50, -12, 12);
+  Drivetrain.setSwingConstants(0.2, 0.005, 0.3, 15, 0.5, 50, -12, 12);
+  Drivetrain.setArcConstants(0.25, 0.01, 0.7, 15, 0.5, 50, -12, 12);
+
+  Ladybrown.setPIDConstants(0.5, 0, 0, 0, 1);
+
 
   //  Update display for clarification
   Brain.Screen.setCursor(2, 1);
@@ -160,25 +173,100 @@ void startOdometry(float initialX, float initialY, float initialHeading)
   gt_odometry = launch_task(std::bind(&odometry::startTracking, &Odom, initialX, initialY, initialHeading));
 }
 
+/**
+ * @brief stops intake when ring in ready to be scored
+ */
+int holdRing(uint8_t stage)
+{
+  if(stage == 1) waitUntil(Distance.objectDistance(inches) < 1.0);
+  else waitUntil(Optical.isNearObject());
+  Intake.setSpeed(0);
+
+  return 0;
+}
+
+/**
+ * @brief Activates the mogo clamp after a delay
+ * 
+ * @param mS millisecond delay
+ */
+int activateMogoClamp(int mS)
+{
+  task::sleep(mS);
+  MogoClamp.off();
+
+  return 0;
+}
+
+/**
+ * @brief skills route
+ */
 void skills()
 {
-  at_intake = launch_task(std::bind(&intake::intake_task, &Intake));
+  float initialTime = Brain.Timer.time();
+  Inertial.setHeading(90, deg);
 
-  Intake.setColor(true);
+  // first ring onto alliance stake
   Intake.setSpeed(100);
-  Drivetrain.driveFor(12);
-  Intake.setSpeed(0);
-  Drivetrain.driveFor(-18, 3);
+  task hold_ring_task = launch_task(std::bind(holdRing, 2));
+  Drivetrain.driveFor(14);
+  Drivetrain.driveFor(-14.75, 3);
+  hold_ring_task.stop();
+  holdRing(2);
   Intake.setSpeed(100);
+  task::sleep(400);
+
+  // ring 1 and corner ring
+  Intake.setSpeed(-100);
+  Drivetrain.swingTo(left, 10, 2);
+  Intake.setSpeed(100);
+  hold_ring_task = launch_task(std::bind(holdRing, 1));
+  Drivetrain.driveFor(50);
+  task::sleep(500);
+  Drivetrain.arcFor(left, 7, 100);
+  hold_ring_task.stop();
+  Intake.setSpeed(100);
+  hold_ring_task = launch_task(std::bind(holdRing, 2));
+  Drivetrain.driveFor(16, 1.5);
+
+  //pick up mogo and score
+  Drivetrain.driveFor(-15);
+  Drivetrain.swingTo(left, 310, 2);
+  Drivetrain.driveFor(-18);
+  Drivetrain.setDriveSpeed(-6, volt);
+  activateMogoClamp(300);
+  Intake.setSpeed(100);
+  task::sleep(50);
+  Drivetrain.stopDrive();
+  task::sleep(1000);
+
+  // corner
+  Drivetrain.turnTo(182, 1.5);
+  Drivetrain.driveFor(28);
+  Drivetrain.turnTo(150, 1.5);
+  task::sleep(250);
+  Drivetrain.driveFor(-56);
+  MogoClamp.on();
+  
+  hold_ring_task.stop();
+  Drivetrain.swingTo(left, 90);
+  hold_ring_task = launch_task(std::bind(holdRing, 2));
+
+  Brain.Screen.clearScreen(purple);
+  Controller1.Screen.print((Brain.Timer.time() - initialTime) * 0.001);
 }
 
 void autonomous(void) {
-  Drivetrain.setDriveConstants(0.75, 0.005, 1, 9, 0.75, 30, -12, 12, 0.5);
-  Drivetrain.setTurnConstants(0.15, 0.01, 0.6, 15, 0.5, 50, -12, 12);
-  Drivetrain.setSwingConstants(0.2, 0.005, 0.3, 15, 0.5, 50, -12, 12);
-  Drivetrain.setArcConstants(0.25, 0.01, 0.7, 15, 0.5, 50, -12, 12);
+  at_intake = launch_task(std::bind(&intake::intake_task, &Intake));
+  at_ladybrown = launch_task(std::bind(&ladybrown::ladybrown_task, &Ladybrown));
 
-  skills();
+  Ladybrown.setTarget(ladybrown::DOWN);
+  task::sleep(1000);
+  Ladybrown.setTarget(ladybrown::READY);
+  task::sleep(250);
+  //Ladybrown.setTarget(ladybrown::STORAGE);
+
+  //skills();
 }
 
 /* ---------- User Control Functions ---------- */
@@ -266,11 +354,10 @@ int pnuematic_control_task()
 
   while(true)
   {
-    if(Controller1.ButtonR2.pressing() && !R2_wasPressing) MogoClamp.toggle();
+    //if(Controller1.ButtonR2.pressing() && !R2_wasPressing) MogoClamp.toggle();
     R2_wasPressing = Controller1.ButtonR2.pressing();
     
-    if(!Competition.isEnabled() && wasEnabled) ClimbClamp.set(true);
-    if(Competition.isEnabled() && !wasEnabled && ClimbClamp.getValue()) ClimbClamp.set(false);
+    
     wasEnabled = Competition.isDriverControl() && Competition.isEnabled();
 
     task::sleep(10);
@@ -284,7 +371,7 @@ void usercontrol(void)
   dt_intake_control = task(intake_control_task);
   dt_ladybrown = launch_task(std::bind(&ladybrown::ladybrown_task, &Ladybrown));
   dt_ladybrown_control = task(ladybrown_control_task);
-  dt_pnuematic_control = task(pnuematic_control_task);
+  //dt_pnuematic_control = task(pnuematic_control_task);
 
   while (1) 
   {

@@ -100,6 +100,7 @@ public:
     float driveFor(float distance, float timeout, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, float maxOutput);
     float driveFor(float distance, float timeout, float heading, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, float maxOutput, \
         float headingKp);
+    void driveForSpeed(float time, float volts);
 
     void setDriveSpeed(float speed, vex::velocityUnits unit);
     void setDriveSpeed(float speed, vex::voltageUnits unit);

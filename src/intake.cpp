@@ -25,6 +25,7 @@ void intake::intake_task()
 
     bool ejectRing = false;
     bool adjustedLadybrown = false;
+    int jammedFor = 0;
     ladybrown::ladybrown_positions currentTarget;
     while(m_runIntakeTask)
     {
@@ -69,6 +70,12 @@ void intake::intake_task()
                     }
                 }
             }
+        }
+
+        if(fabs(m_Intake->velocity(vex::percentUnits::pct)) < 5 && m_currentSpeed > 5) jammedFor = 10;
+        if(jammedFor > 0) {
+            m_Intake->spin(vex::directionType::rev, 100, vex::percentUnits::pct);
+            jammedFor--;
         }
 
         if(m_currentSpeed == 0) m_Intake->stop(m_stoppingType);

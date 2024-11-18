@@ -325,6 +325,19 @@ float chassis::driveFor(float distance, float timeout, float heading, float Kp, 
 }
 
 /**
+ * Drives for a distance without a PID
+ * 
+ * @param distance the distance to be driven, in inches
+ * @param volts the voltage to be used
+ */
+void chassis::driveForSpeed(float time, float volts)
+{
+    setDriveSpeed(volts, vex::voltageUnits::volt);
+    vex::task::sleep(time * 1000);
+    stopDrive();
+}
+
+/**
  * Sets the speed of the drivetrain
  * 
  * @param   speed   the desired speed
