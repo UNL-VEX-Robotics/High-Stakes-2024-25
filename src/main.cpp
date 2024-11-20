@@ -10,6 +10,7 @@
 #include "vex.h"
 #include "odom.h"
 #include "drivetrain.h"
+#include "grapher.h"
 
 using namespace vex;
 
@@ -24,22 +25,22 @@ competition Competition;
 controller Controller = controller();
 
 // Motors for Left Side
-motor Left_Motor1 = motor(PORT4, ratio6_1, true);
-motor Left_Motor2 = motor(PORT14, ratio6_1, true);
-motor Left_Motor3 = motor(PORT5, ratio6_1, true);
-motor Left_Motor4 = motor(PORT20, ratio6_1);
+motor Left_Motor1 = motor(PORT10, ratio6_1, true);
+motor Left_Motor2 = motor(PORT9, ratio6_1, true);
+motor Left_Motor3 = motor(PORT8, ratio6_1, true);
+motor Left_Motor4 = motor(PORT7, ratio6_1);
 motor_group MotorGroupLeft = motor_group(Left_Motor1, Left_Motor2, Left_Motor3, Left_Motor4);
 
 // Motors for Right Side
-motor Right_Motor1 = motor(PORT7, ratio6_1);
-motor Right_Motor2 = motor(PORT10, ratio6_1);
+motor Right_Motor1 = motor(PORT20, ratio6_1);
+motor Right_Motor2 = motor(PORT19, ratio6_1);
 motor Right_Motor3 = motor(PORT18, ratio6_1);
-motor Right_Motor4 = motor(PORT8, ratio6_1, true);
+motor Right_Motor4 = motor(PORT17, ratio6_1, true);
 motor_group MotorGroupRight = motor_group(Right_Motor1, Right_Motor2, Right_Motor3, Right_Motor4);
 
 // Intake Motors
-motor HookIntake = motor(PORT19, true);
-motor FrontIntake = motor(PORT3, true);
+motor HookIntake = motor(PORT2, true);
+motor FrontIntake = motor(PORT1, true);
 
 motor_group Intake_group = motor_group(HookIntake, FrontIntake);
 
@@ -50,15 +51,16 @@ motor ClawMotorRight = motor(PORT12, true);
 motor_group ClawMotorGroup = motor_group(ClawMotorLeft, ClawMotorRight);
 
 // Brain and LEDs(motors)
-brain Brain;
+vex::brain Brain;
 led ClampMotor = led(Brain.ThreeWirePort.A);
 led RatchetMotor = led(Brain.ThreeWirePort.B);
 
-inertial Inertial = inertial(PORT1);
+inertial Inertial = inertial(PORT3);
+Graph graph = Graph(&Brain.Screen);
 
-odometry Odom = odometry(odometry::odometry_pod(odometry::odometry_pod::VERTICAL, &MotorGroupLeft, 5.656, 0.0212), odometry:odometry_pod(), &Inertial);
-chassis Drivetrain = chassis(std::bind(&odometry::getPosition, &Odom), &MotorGroupLeft, &MotorGroupRight, &Intertial, 11.3125, 0.0212712 ); 
-//rotation ClawRotationSensor = rotation(PORTX); 
+odometry Odom = odometry(odometry::odometry_pod(odometry::odometry_pod::VERTICAL, &Right_Motor1, 5.656, 0.0212), odometry::odometry_pod(), &Inertial);
+chassis Drivetrain = chassis(std::bind(&odometry::getPosition, &Odom), &MotorGroupLeft, &MotorGroupRight, &Inertial, 11.3125, 0.01701696 ); 
+//rotation ClawRotationSensor = rotation(PORT5); 
 
 
 // Control Variables
@@ -89,16 +91,16 @@ bool isBlueRing(vex::color c)
   return false;
 }
 
-const int ringEjectPosition = (1440/3); 
+const int ringEjectPosition = (1430/3);
 
-const int ringRedirectPostion = (1440/3);
+const int ringRedirectPostion = (1430/3); 
 
 
 //Limit swtich 
 //limit limitSwitch = limit(Brain.ThreeWirePort.H);
 
 //Optiic sensor
-optical Optical = optical(PORT2);
+optical Optical = optical(PORT4);
 double hue = Optical.hue();
 //optical mode
 bool isRed = false;
@@ -146,16 +148,14 @@ int intake_task()
         }
         else Optical.setLight(ledState::off);
 
-        Brain.Screen.clearScreen();
-        Brain.Screen.setCursor(1, 1);
-        Brain.Screen.print(abs((((int)HookIntake.position(deg) - 5) % ringEjectPosition) - ringEjectPosition));
 
         if(ejectRing)
         {
-          if (abs((((int)HookIntake.position(deg)) % ringEjectPosition) - ringEjectPosition) < 35)
+          if (abs(((int)HookIntake.position(vex::rotationUnits::deg) % ringEjectPosition) - ringEjectPosition) < 35)
           {
-            Intake_group.stop(hold);
-            task::sleep(300);
+            task::sleep(200);
+            Intake_group.spin(reverse, 100, percent);
+            task::sleep(200);
             Intake_group.spin(forward, 100, percent);
             ejectRing = false;
           }
@@ -163,16 +163,15 @@ int intake_task()
         else Intake_group.spin(forward, 100, percent);
 
         if(redirectRing){
-          if (abs((((int)HookIntake.position(deg))% ringRedirectPostion) - ringRedirectPostion) < 35)
+          if (abs((((int)HookIntake.position(deg) )% ringRedirectPostion) - (ringRedirectPostion - 40)) < 35)
           {
             Intake_group.spin(reverse, 100, percent);
-            task::sleep(600);
+            task::sleep(1000); 
             Intake_group.spin(forward, 100, percent);
             redirectRing = false;
           }
         }
         else Intake_group.spin(forward, 100, percent);
-
 
       }
       else Intake_group.stop(brake);
@@ -238,11 +237,34 @@ void Eject(){
  * This function is called once after the V5 has been powered on.
  * It can be used to initialize sensors, reset encoders, etc.
  */
+
+
 void pre_auton(void) {
   // All activities that occur before the competition starts
   // Example: clearing encoders, setting servo positions, ...
+  //  Calibration
+  Brain.Screen.clearScreen();
+  Brain.Screen.setCursor(1, 1);
+  Brain.Screen.setPenColor(white);
+  Brain.Screen.setFillColor(black);
+  Brain.Screen.print("Calibrating...");
 
-  Optical.setLightPower(100, percent);
+  Inertial.startCalibration();
+  do {
+    task::sleep(50);
+  } while (Inertial.isCalibrating());
+
+  //  Set all PID constants
+
+  //  Update display for clarification
+  Brain.Screen.setCursor(2, 1);
+  Brain.Screen.setPenColor(green);
+  Brain.Screen.print("Calibrated.");
+  task::sleep(10);
+
+  //  check if devices are connected
+  Brain.Screen.setPenColor(red);
+  Brain.Screen.newLine();
 }
 
 //------------------------------------------------------------------------------
@@ -255,10 +277,40 @@ void pre_auton(void) {
  * This function should contain the autonomous routine for the robot.
  */
 void autonomous(void) {
-  Drivetrain.setDriveConstants(.75, .005, 1, 9, .75, 30, -12, 12, .5);
-  Drivetrain.setTurnConstants(.15, .01, .6, 15, .05, 50, -12, 12);
-  Drivetrain.setSwingConstants(.2, .005, .3, 15, .5, 50, -12, 12);
-  Drivetrain.setArcConstants(.25, .001, 7, 15, .5, 50, -12, 12);
+
+  Inertial.setHeading(220, degrees);
+  
+  Drivetrain.setDriveConstants(.95, .005, 1, 9, .25, 30, -12, 12, .5);
+  Drivetrain.setTurnConstants(0.128, .005, .025, 5, .05, 50, -12, 12); 
+  Drivetrain.setSwingConstants(.25, .0, .225, 15, .5, 50, -12, 12);
+  Drivetrain.setArcConstants(0.325, .01, .7, 15, .5, 50, -12, 12);
+  Intake_group.spin(forward, 100, percent);
+  ClampMotor.on();
+
+  task::sleep(250);
+
+  Drivetrain.swingFor(right, 77.0, .7);
+
+  Drivetrain.driveFor(17, 1);
+
+
+  Drivetrain.driveFor(-24.5);
+  Drivetrain.turnFor(88, 1);
+  Drivetrain.driveFor(-14.5);
+  //Drivetrain.swingFor(left, -260.0);
+  Intake_group.stop();
+  waitUntil(400);
+  ClampMotor.off();
+  Intake_group.spin(forward, 100, percent);
+  Drivetrain.swingFor(right, 190.0, 1.5);
+  Drivetrain.driveFor(26.5);
+  Drivetrain.swingFor(right, 45, 1);
+  Drivetrain.driveFor(5, .7);
+  Drivetrain.driveFor(-3, .5);
+  ClawMotorGroup.setVelocity(100, percent);
+  ClawMotorGroup.spinFor(1400, degrees);
+  Drivetrain.driveFor(6, .7);
+  ClawMotorGroup.spinFor(-(1400-600), degrees);
 
 }
 
@@ -323,9 +375,9 @@ void usercontrol(void) {
     }
 
     // Control Claw Motors
-    if (Controller.ButtonR2.pressing()) {
+    if (Controller.ButtonR1.pressing()) {
       ClawMotorGroup.spin(fwd, 100, percent);
-    } else if (Controller.ButtonR1.pressing()) {
+    } else if (Controller.ButtonR2.pressing()) {
       ClawMotorGroup.spin(reverse, 100, percent);
     } else {
       ClawMotorGroup.stop();

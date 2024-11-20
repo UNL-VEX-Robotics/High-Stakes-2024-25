@@ -13,7 +13,9 @@
  * Default constructor for the odometry_pod class
  */
 odometry::odometry_pod::odometry_pod() :
- 
+m_sensor(NONE),
+m_orientation(VERTICAL),
+m_distanceFromTrackingCenter(0.0f)
 {
 }
 
