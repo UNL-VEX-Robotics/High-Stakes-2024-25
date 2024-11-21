@@ -299,7 +299,7 @@ void usercontrol(void) {
 
     while (true) {
         // Toggle Clamp LED on ButtonL1 Press
-        if (Controller.ButtonUp.pressing() && !L1WasPressing) {
+        if (Controller.ButtonL1.pressing() && !L1WasPressing) {
             ClampMotor.set(!ClampMotor);
         }
 
@@ -308,9 +308,13 @@ void usercontrol(void) {
             RatchetMotor.set(!RatchetMotor);
         }
 
-        if (Controller.ButtonRight.pressing() && !RightwasPressing) {
-            ClawMotorGroup.spin(fwd, 100, dps);
+        if (Controller.ButtonUp.pressing()) {
+            ClawMotorGroup.spin(fwd, 100, percent);
         }
+        if (Controller.ButtonDown.pressing()) {
+            ClawMotorGroup.spin(reverse, 100, percent);
+        }
+        
 
         // Update Toggle States
         RightwasPressing = Controller.ButtonRight.pressing();
