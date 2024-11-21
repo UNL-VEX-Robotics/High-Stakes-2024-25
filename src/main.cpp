@@ -50,7 +50,7 @@ motor_group ClawMotorGroup = motor_group(ClawMotorLeft, ClawMotorRight);
 // Brain and LEDs
 vex::brain Brain;
 led ClampMotor = led(Brain.ThreeWirePort.A);
-led RatchetMotor = led(Brain.ThreeWirePort.B);
+led RatchetMotor = led(Brain.ThreeWirePort.C);
 
 inertial Inertial = inertial(PORT3);
 Graph graph = Graph(&Brain.Screen);
@@ -264,19 +264,20 @@ void autonomous(void) {
     Drivetrain.swingFor(left, 60, .5);
     ClawMotorGroup.spinFor(190, degrees);
     Drivetrain.driveFor(14, 2);
-    Drivetrain.driveFor(-8, .7);
-    ClawMotorGroup.spinFor(-190, degrees);
-    Drivetrain.swingFor(right, -132.5, 1);
+    Drivetrain.driveFor(-7, .7);
+    ClawMotorGroup.spinFor(-195, degrees);
+    Drivetrain.swingFor(right, -126.5, 1);
     Drivetrain.driveFor(90, 4);
-    Drivetrain.turnFor(40, .7);
-    Drivetrain.driveFor(15, 2);
-    Drivetrain.driveFor(-8, 1);
-    Drivetrain.turnFor(180, 2);
+    Drivetrain.turnFor(35, .7);
+    Drivetrain.driveFor(20, 2);
+    Drivetrain.driveFor(-10, 1);
+    Drivetrain.turnFor(190, 2);
     ClampMotor.on();
     Intake_group.stop(hold);
     Drivetrain.driveFor(-10, 1);
     Drivetrain.driveFor(-10, 1);
-    ClawMotorGroup.spinFor(1200, degrees);
+    ClawMotorGroup.setTimeout(1, seconds);
+    ClawMotorGroup.spinFor(800, degrees);
     Drivetrain.driveFor(69, 1);
 
 
@@ -308,11 +309,13 @@ void usercontrol(void) {
             RatchetMotor.set(!RatchetMotor);
         }
 
-        if (Controller.ButtonUp.pressing()) {
-            ClawMotorGroup.spin(fwd, 100, percent);
-        }
-        if (Controller.ButtonDown.pressing()) {
+        if (Controller.ButtonR2.pressing()) {
             ClawMotorGroup.spin(reverse, 100, percent);
+        }else if (Controller.ButtonR1.pressing()) {
+            ClawMotorGroup.spin(forward, 100, percent);
+        }
+        else{
+          ClawMotorGroup.stop();
         }
         
 
