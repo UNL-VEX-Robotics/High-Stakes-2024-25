@@ -256,7 +256,7 @@ void autonomous(void) {
     intakeOn = true;
     vex::thread intake_Functionality = vex::thread(intake_task);
     
-    /*
+    
     ClampMotor.on();
     Drivetrain.driveFor(-14, .5);
     ClampMotor.off();
@@ -291,7 +291,7 @@ void autonomous(void) {
     ClawMotorGroup.setTimeout(1, seconds);
     ClawMotorGroup.spinFor(800, degrees);
     Drivetrain.driveFor(73, 1);
-    */
+    
 
 
 
