@@ -116,7 +116,7 @@ int intake_task() {
         if (Controller.ButtonDown.pressing()) {
             Intake_group.spin(reverse, 100, percent);
         } else {
-            if (intakeOn || Competition.isAutonomous()) {
+            if (intakeOn) {
                 if (Optical.isNearObject()) {
                     Optical.setLight(ledState::on);
 
@@ -124,7 +124,7 @@ int intake_task() {
                         ejectRing = true;
                     }
 
-                    if (((isRed && isRedRing(Optical.color())) || (!isRed && isBlueRing(Optical.color()))) && (redirectMode || Competition.isAutonomous())) {
+                    if (((isRed && isRedRing(Optical.color())) || (!isRed && isBlueRing(Optical.color()))) && (redirectMode)) {
                         redirectRing = true;
                     }
                 } else {
@@ -133,9 +133,16 @@ int intake_task() {
 
                 if (ejectRing) {
                     if (abs(((int)HookIntake.position(vex::rotationUnits::deg) % ringEjectPosition) - ringEjectPosition) < 35) {
-                        task::sleep(50);
+                        if(Competition.isAutonomous()){
+                            task::sleep(50);
+                            Intake_group.spin(reverse, 100, percent);
+                            task::sleep(120);
+                            Intake_group.spin(forward, 100, percent);
+                            ejectRing = false;
+                        }
+                        task::sleep(0);
                         Intake_group.spin(reverse, 100, percent);
-                        task::sleep(200);
+                        task::sleep(120);
                         Intake_group.spin(forward, 100, percent);
                         ejectRing = false;
                     }
@@ -244,7 +251,12 @@ void autonomous(void) {
     Drivetrain.setTurnConstants(0.128, 0.005, 0.025, 5, 0.05, 50, -12, 12);
     Drivetrain.setSwingConstants(0.25, 0.0, 0.225, 15, 0.5, 50, -12, 12);
     Drivetrain.setArcConstants(0.325, 0.01, 0.7, 15, 0.5, 50, -12, 12);
-
+    Intake_group.spin(forward, 100, percent);
+    redirectMode = false;
+    intakeOn = true;
+    vex::thread intake_Functionality = vex::thread(intake_task);
+    
+    /*
     ClampMotor.on();
     Drivetrain.driveFor(-14, .5);
     ClampMotor.off();
@@ -265,21 +277,21 @@ void autonomous(void) {
     ClawMotorGroup.spinFor(190, degrees);
     Drivetrain.driveFor(14, 2);
     Drivetrain.driveFor(-7, .7);
-    ClawMotorGroup.spinFor(-195, degrees);
-    Drivetrain.swingFor(right, -126.5, 1);
-    Drivetrain.driveFor(90, 4);
+    ClawMotorGroup.spinFor(-190, degrees);
+    Drivetrain.swingFor(right, -130.5, 1);
+    Drivetrain.driveFor(92.3, 4);
     Drivetrain.turnFor(35, .7);
-    Drivetrain.driveFor(20, 2);
-    Drivetrain.driveFor(-10, 1);
+    Drivetrain.driveFor(25, 2);
+    Drivetrain.driveFor(-15, 1);
     Drivetrain.turnFor(190, 2);
+    Intake_group.spin(reverse, 100, percent);
     ClampMotor.on();
-    Intake_group.stop(hold);
     Drivetrain.driveFor(-10, 1);
-    Drivetrain.driveFor(-10, 1);
+    Drivetrain.driveFor(-20, 1);
     ClawMotorGroup.setTimeout(1, seconds);
     ClawMotorGroup.spinFor(800, degrees);
-    Drivetrain.driveFor(69, 1);
-
+    Drivetrain.driveFor(73, 1);
+    */
 
 
 
