@@ -86,8 +86,8 @@ vex::task launch_task(F&& function) {
 
 /* ---------- Objects ---------- */
 Graph graph = Graph(&Brain.Screen);
-ladybrown Ladybrown = ladybrown(&LiftGroup, -145, -30, 100, 0);
-intake Intake = intake(&IntakeGroup, &Optical, 1920, &Ladybrown);
+ladybrown Ladybrown = ladybrown(&LiftGroup, -155, -70, 0, 180);
+intake Intake = intake(&IntakeGroup, &Optical, 1920 / 3, &Ladybrown, 2000 / 3);
 
 odometry Odom = odometry(odometry::odometry_pod(odometry::odometry_pod::VERTICAL, &LeftFront, 5.65625, 0.0212712), odometry::odometry_pod(), &Inertial);
 chassis Drivetrain = chassis(std::bind(&odometry::getPosition, &Odom), &Left, &Right, &Inertial, 11.3125, 0.0212712);
@@ -129,7 +129,9 @@ void pre_auton(void)
   Drivetrain.setSwingConstants(0.2, 0.005, 0.3, 15, 0.5, 50, -12, 12);
   Drivetrain.setArcConstants(0.25, 0.01, 0.7, 15, 0.5, 50, -12, 12);
 
-  Ladybrown.setPIDConstants(0.5, 0, 0, 0, 1);
+  Ladybrown.setPIDConstants(0.5, 0, 0, 0, 20);
+
+  Intake.setColorSort(false);
 
 
   //  Update display for clarification
@@ -203,8 +205,9 @@ int activateMogoClamp(int mS)
  */
 void skills()
 {
-  float initialTime = Brain.Timer.time();
+  float initialTime = Brain.Timer.systemHighResolution();
   Inertial.setHeading(90, deg);
+  Ladybrown.setTarget(Ladybrown.DOWN);
 
   // first ring onto alliance stake
   Intake.setSpeed(100);
@@ -253,20 +256,71 @@ void skills()
   hold_ring_task = launch_task(std::bind(holdRing, 2));
 
   Brain.Screen.clearScreen(purple);
-  Controller1.Screen.print((Brain.Timer.time() - initialTime) * 0.001);
+  Controller1.Screen.print((Brain.Timer.systemHighResolution() - initialTime) * 0.000001);
+}
+
+void centerMogo()
+{
+
+  int microsecondsStart = Brain.Timer.systemHighResolution();
+  Inertial.setHeading(105, deg);
+  Ladybrown.setTarget(Ladybrown.DOWN);
+  Intake.setSpeed(100);
+  task stopIntake = launch_task(std::bind(holdRing, 2));
+
+  Drivetrain.driveFor(44.5);
+  Drivetrain.turnTo(0);
+  waitUntil((int)IntakeGroup.position(deg) % 1920 > 400 || IntakeGroup.velocity(pct) < 5);
+  Intake.setSpeed(0);
+  Drivetrain.driveFor(-5);
+  Drivetrain.swingFor(right, -60);
+  Drivetrain.driveFor(3);
+  Drivetrain.driveFor(-5.5);
+  MogoClamp.off();
+  task::sleep(250);
+
+  stopIntake.stop();
+  Intake.setSpeed(100);
+  task::sleep(5000);
+  Drivetrain.swingFor(right, 45);
+
+  Drivetrain.driveFor(32);
+  Drivetrain.driveFor(8);
+  Drivetrain.driveFor(-8);
+
+  Drivetrain.turnFor(180);
+  Drivetrain.driveFor(34);
+  Drivetrain.turnTo(210);
+
+  Drivetrain.driveFor(30);
+  Drivetrain.turnTo(180);
+  Drivetrain.driveFor(30);
+  task::sleep(500);
+
+  Drivetrain.turnTo(345);
+  Drivetrain.driveFor(100);
+  Drivetrain.turnTo(165);
+  MogoClamp.on();
+  Drivetrain.setDriveSpeed(-8, volt);
+
+  task::sleep(2000);
+
+  Drivetrain.driveFor(12);
+  Drivetrain.turnTo(270);
+  Drivetrain.driveFor(-48);
+
+
+  Controller1.Screen.print((float)(Brain.Timer.systemHighResolution() - microsecondsStart) * 0.000001);
 }
 
 void autonomous(void) {
   at_intake = launch_task(std::bind(&intake::intake_task, &Intake));
   at_ladybrown = launch_task(std::bind(&ladybrown::ladybrown_task, &Ladybrown));
 
-  Ladybrown.setTarget(ladybrown::DOWN);
-  task::sleep(1000);
-  Ladybrown.setTarget(ladybrown::READY);
-  task::sleep(250);
-  //Ladybrown.setTarget(ladybrown::STORAGE);
+  //centerMogo();
 
-  //skills();
+
+  skills();
 }
 
 /* ---------- User Control Functions ---------- */
@@ -292,16 +346,29 @@ int intake_control_task()
 {
   bool L1_wasPressing = false;
   bool L2_wasPressing = false;
+  bool Down_wasPressing = false;
 
   bool intakeOn = false;
   bool spinForward = true;
+  bool ladybrownMacro = false;
 
-  Intake.setColorSort(true);
+  Intake.setColorSort(false);
   Intake.setBrakeType(brake);
   while(true)
   {
     if(Controller1.ButtonL1.pressing() && !L1_wasPressing) intakeOn = !intakeOn;
     if(Controller1.ButtonL2.pressing() && !L2_wasPressing) spinForward = !spinForward;
+    if(Controller1.ButtonDown.pressing() && !Down_wasPressing) ladybrownMacro = !ladybrownMacro;
+
+    if(ladybrownMacro && Optical.isNearObject())
+    {
+      task::sleep(400);
+      Intake.setSpeed(-100);
+      task::sleep(400);
+      Intake.setSpeed(0);
+      ladybrownMacro = false;
+      intakeOn = false;
+    }
 
     if(intakeOn && spinForward) Intake.setSpeed(100);
     else if(intakeOn) Intake.setSpeed(-100);
@@ -309,6 +376,11 @@ int intake_control_task()
 
     L1_wasPressing = Controller1.ButtonL1.pressing();
     L2_wasPressing = Controller1.ButtonL2.pressing();
+    Down_wasPressing = Controller1.ButtonDown.pressing();
+
+    Brain.Screen.clearScreen();
+    Brain.Screen.setCursor(1, 1);
+    Brain.Screen.print((1920 / 3 )- ((int)IntakeGroup.position(deg) % (1920 / 3)));
     task::sleep(10);
   }
 }
@@ -318,45 +390,92 @@ int intake_control_task()
  */
 int ladybrown_control_task()
 {
-  bool B_wasPressing = false;
-  int ladybrownTarget = 1; // READY
+  
+  bool R1_wasPressing = false;
+  bool R2_wasPressing = false;
+  int ladybrownTarget = 1; // down
+
   while(true)
   {
-    if(Controller1.ButtonB.pressing() && !B_wasPressing)
+    if(Controller1.ButtonR1.pressing() && !R1_wasPressing && ladybrownTarget < 4) 
     {
-      ladybrownTarget = 1;
-      Ladybrown.setTarget(ladybrown::ladybrown_positions::DOWN);
-    }
-    B_wasPressing = Controller1.ButtonB.pressing();
+      ladybrownTarget++;
 
-    while(Controller1.ButtonR1.pressing())
-    {
-      Ladybrown.setTarget((ladybrown::ladybrown_positions)ladybrownTarget);
-      if(Ladybrown.getNearestPosition() == Ladybrown.getTargetPosition())
+      switch (ladybrownTarget)
       {
-        ladybrownTarget++;
-        if(ladybrownTarget > 3) ladybrownTarget = 1; // cycle from SCORE to READY
+      case 1:
+        Ladybrown.setTarget(ladybrown::DOWN);
+        break;
+      case 2:
+        Ladybrown.setTarget(ladybrown::READY);
+        break;
+      case 3:
+        Ladybrown.setTarget(ladybrown::STORAGE);
+        break;    
+      default:
+        Ladybrown.setTarget(ladybrown::SCORE);
+        break;
       }
-      task::sleep(10);
+
+      Controller1.rumble(".");
     }
+    R1_wasPressing = Controller1.ButtonR1.pressing();
+    if(Controller1.ButtonR2.pressing() && !R2_wasPressing && ladybrownTarget > 1) 
+    {
+      ladybrownTarget--;
+
+      switch (ladybrownTarget)
+      {
+      case 1:
+        Ladybrown.setTarget(ladybrown::DOWN);
+        Controller1.Screen.clearLine();
+        Controller1.Screen.print("DOWN");
+        break;
+      case 2:
+        Ladybrown.setTarget(ladybrown::READY);
+        Controller1.Screen.clearLine();
+        Controller1.Screen.print("READY");
+        break;
+      case 3:
+        Ladybrown.setTarget(ladybrown::STORAGE);
+        Controller1.Screen.clearLine();
+        Controller1.Screen.print("STORAGE");
+        break;    
+      default:
+        Ladybrown.setTarget(ladybrown::SCORE);
+        Controller1.Screen.clearLine();
+        Controller1.Screen.print("SCORE");
+        break;
+      }
+
+      Controller1.rumble(".");
+    }
+    R2_wasPressing = Controller1.ButtonR2.pressing();
 
     task::sleep(10);
   }
 }
+
 
 /**
  * @brief controls the pistons on the robot
  */
 int pnuematic_control_task()
 {
-  bool R2_wasPressing = false;
+  bool X_wasPressing = false;
+  bool toggleMogoMech = false;
   bool wasEnabled = false;
 
   while(true)
   {
-    //if(Controller1.ButtonR2.pressing() && !R2_wasPressing) MogoClamp.toggle();
-    R2_wasPressing = Controller1.ButtonR2.pressing();
-    
+    if(Controller1.ButtonX.pressing() && !X_wasPressing)
+    {
+      toggleMogoMech = !toggleMogoMech;
+
+      if(toggleMogoMech) MogoClamp.off();
+      else MogoClamp.on();
+    }
+    X_wasPressing = Controller1.ButtonX.pressing();
     
     wasEnabled = Competition.isDriverControl() && Competition.isEnabled();
 
@@ -371,7 +490,7 @@ void usercontrol(void)
   dt_intake_control = task(intake_control_task);
   dt_ladybrown = launch_task(std::bind(&ladybrown::ladybrown_task, &Ladybrown));
   dt_ladybrown_control = task(ladybrown_control_task);
-  //dt_pnuematic_control = task(pnuematic_control_task);
+  dt_pnuematic_control = task(pnuematic_control_task);
 
   while (1) 
   {

@@ -6,7 +6,7 @@
  * @param intakeMotors a pointer to the intake motor group
  * @param ringSensor a pointer to the optical sensor on the intake
  */
-intake::intake(vex::motor_group *intakeMotors, vex::optical* ringSensor, int ringEjectPosition, ladybrown* ladybrown) :
+intake::intake(vex::motor_group *intakeMotors, vex::optical* ringSensor, int ringEjectPosition, ladybrown* ladybrown, int ladybrownPosition) :
     m_ladybrown(ladybrown),
     m_Intake(intakeMotors),
     m_Optical(ringSensor),    
@@ -72,7 +72,7 @@ void intake::intake_task()
             }
         }
 
-        if(fabs(m_Intake->velocity(vex::percentUnits::pct)) < 5 && m_currentSpeed > 5) jammedFor = 10;
+        if(fabs(m_Intake->velocity(vex::percentUnits::pct)) < 10 && m_currentSpeed > 10) jammedFor = 10;
         if(jammedFor > 0) {
             m_Intake->spin(vex::directionType::rev, 100, vex::percentUnits::pct);
             jammedFor--;
@@ -124,4 +124,14 @@ bool intake::setColorSort(bool enable)
 void intake::setColor(bool isRed)
 {
     m_isRed = isRed;
+}
+
+void intake::setLadybrown(bool val)
+{
+    m_useLadyBrown = val;
+}
+
+bool intake::getLadybrown()
+{
+    return m_useLadyBrown;
 }

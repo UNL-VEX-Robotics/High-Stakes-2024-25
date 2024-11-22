@@ -80,11 +80,8 @@ void ladybrown::ladybrown_task()
     m_runLadybrownTask = true;
     while(m_runLadybrownTask)
     {
-        if(m_PID.isSettled()) m_ladybrown_motors->stop(vex::brakeType::hold);
-        else {
-            float output = m_PID.getOutput(ladybrown_positionValues[(int)m_targetPosition] - m_ladybrown_motors->position(vex::rotationUnits::deg));
-            m_ladybrown_motors->spin(vex::directionType::fwd, output, vex::voltageUnits::volt);
-        }
+        float output = m_PID.getOutput(ladybrown_positionValues[(int)m_targetPosition] - m_ladybrown_motors->position(vex::rotationUnits::deg));
+        m_ladybrown_motors->spin(vex::directionType::fwd, output, vex::voltageUnits::volt);
 
         vex::task::sleep(10);
     }

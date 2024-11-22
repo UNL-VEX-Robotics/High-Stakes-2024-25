@@ -28,7 +28,7 @@ private:
         float maxOutput = 0;
     }PID_constants;
 
-    ladybrown_positions m_targetPosition = DOWN;
+    ladybrown_positions m_targetPosition = READY;
     bool m_runLadybrownTask;
 
 public:
