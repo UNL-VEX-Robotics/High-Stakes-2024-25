@@ -86,7 +86,7 @@ vex::task launch_task(F&& function) {
 
 /* ---------- Objects ---------- */
 Graph graph = Graph(&Brain.Screen);
-ladybrown Ladybrown = ladybrown(&LiftGroup, -155, -70, 0, 180);
+ladybrown Ladybrown = ladybrown(&LiftGroup, -200, -90, 0, 160);
 intake Intake = intake(&IntakeGroup, &Optical, 1920 / 3, &Ladybrown, 2000 / 3);
 
 odometry Odom = odometry(odometry::odometry_pod(odometry::odometry_pod::VERTICAL, &LeftFront, 5.65625, 0.0212712), odometry::odometry_pod(), &Inertial);
@@ -121,12 +121,12 @@ void pre_auton(void)
     task::sleep(50);
   } while (Inertial.isCalibrating());
 
-  Ladybrown.setCurrentPosition(LiftPotentiometer.angle());
+  Ladybrown.setCurrentPosition(-200);
 
   //PIDs
   Drivetrain.setDriveConstants(0.75, 0.005, 1, 9, 0.75, 30, -12, 12, 0.5);
   Drivetrain.setTurnConstants(0.15, 0.01, 0.6, 15, 0.5, 50, -12, 12);
-  Drivetrain.setSwingConstants(0.2, 0.005, 0.3, 15, 0.5, 50, -12, 12);
+  Drivetrain.setSwingConstants(0.2, 0.005, 0.3, 22, 0.5, 50, -12, 12);
   Drivetrain.setArcConstants(0.25, 0.01, 0.7, 15, 0.5, 50, -12, 12);
 
   Ladybrown.setPIDConstants(0.5, 0, 0, 0, 20);
@@ -207,7 +207,11 @@ void skills()
 {
   float initialTime = Brain.Timer.systemHighResolution();
   Inertial.setHeading(90, deg);
+
+
   Ladybrown.setTarget(Ladybrown.DOWN);
+
+
 
   // first ring onto alliance stake
   Intake.setSpeed(100);
@@ -252,8 +256,71 @@ void skills()
   MogoClamp.on();
   
   hold_ring_task.stop();
+  Intake.setSpeed(0);
+
   Drivetrain.swingTo(left, 90);
+  //hold_ring_task = launch_task(std::bind(holdRing, 2));
+  
+  // pick up ring and next mogo
+  Drivetrain.driveFor(50);
+  task::sleep(250);
+  Intake.setSpeed(100);
+  hold_ring_task = launch_task(std::bind(holdRing, 1));
+  Drivetrain.driveFor(6);
+  task::sleep(500);
+  
+
+  Drivetrain.turnTo(180, 1.5);
+  hold_ring_task.stop();
   hold_ring_task = launch_task(std::bind(holdRing, 2));
+  Intake.setSpeed(100);
+  task::sleep(500);
+  Drivetrain.driveFor(24);
+  task::sleep(750);
+
+  hold_ring_task.stop();
+  Drivetrain.driveFor(-16);
+  Drivetrain.swingTo(left, 225);
+
+  Drivetrain.driveFor(5);
+  Drivetrain.turnTo(320, 1.5);
+  Drivetrain.driveFor(-30);
+  task::sleep(250);
+  Drivetrain.driveFor(-6);
+
+  activateMogoClamp(300);
+  Intake.setSpeed(100);
+  Drivetrain.driveFor(-6);
+  Drivetrain.turnTo(0, 1.5);
+  Drivetrain.driveFor(26);
+  Drivetrain.driveFor(-3);
+  Drivetrain.turnTo(90, 1.5);
+  Drivetrain.driveFor(26);
+  Drivetrain.driveFor(-3);
+  Drivetrain.turnTo(180, 1.5);
+  Drivetrain.driveFor(26);
+  Drivetrain.driveFor(-26);
+  Drivetrain.turnTo(45, 1.5);
+  Intake.setSpeed(100);
+  Drivetrain.driveFor(24);
+  task::sleep(250);
+  Drivetrain.driveFor(-15);
+  Drivetrain.turnTo(180, 1.5);
+  Intake.setSpeed(-100);
+  Drivetrain.turnTo(45, 1.5);
+  Intake.setSpeed(100);
+  Drivetrain.driveFor(15);
+  task::sleep(250);
+  Drivetrain.driveFor(-15);
+  Drivetrain.turnTo(225, 1.5);
+ 
+
+
+
+  Drivetrain.driveFor(-15);
+  MogoClamp.on();
+
+
 
   Brain.Screen.clearScreen(purple);
   Controller1.Screen.print((Brain.Timer.systemHighResolution() - initialTime) * 0.000001);
@@ -268,21 +335,21 @@ void centerMogo()
   Intake.setSpeed(100);
   task stopIntake = launch_task(std::bind(holdRing, 2));
 
-  Drivetrain.driveFor(44.5);
+  Drivetrain.driveFor(43.5);
   Drivetrain.turnTo(0);
   waitUntil((int)IntakeGroup.position(deg) % 1920 > 400 || IntakeGroup.velocity(pct) < 5);
   Intake.setSpeed(0);
   Drivetrain.driveFor(-5);
-  Drivetrain.swingFor(right, -60);
-  Drivetrain.driveFor(3);
-  Drivetrain.driveFor(-5.5);
+  Drivetrain.swingFor(right, -60, 1.5);
+  Drivetrain.driveFor(3, 1.5);
+  Drivetrain.driveFor(-6);
   MogoClamp.off();
   task::sleep(250);
 
   stopIntake.stop();
   Intake.setSpeed(100);
   task::sleep(5000);
-  Drivetrain.swingFor(right, 45);
+  Drivetrain.swingFor(right, 35, 1.5);
 
   Drivetrain.driveFor(32);
   Drivetrain.driveFor(8);
@@ -292,22 +359,23 @@ void centerMogo()
   Drivetrain.driveFor(34);
   Drivetrain.turnTo(210);
 
-  Drivetrain.driveFor(30);
+  Drivetrain.driveFor(36);
+  Drivetrain.driveFor(-6);
   Drivetrain.turnTo(180);
-  Drivetrain.driveFor(30);
+  Drivetrain.driveFor(26);
   task::sleep(500);
 
-  Drivetrain.turnTo(345);
+  Drivetrain.turnTo(343);
   Drivetrain.driveFor(100);
-  Drivetrain.turnTo(165);
+  Drivetrain.turnTo(135);
   MogoClamp.on();
-  Drivetrain.setDriveSpeed(-8, volt);
+  Drivetrain.setDriveSpeed(-4, volt);
 
   task::sleep(2000);
 
   Drivetrain.driveFor(12);
   Drivetrain.turnTo(270);
-  Drivetrain.driveFor(-48);
+  Drivetrain.driveFor(-40);
 
 
   Controller1.Screen.print((float)(Brain.Timer.systemHighResolution() - microsecondsStart) * 0.000001);
@@ -317,10 +385,10 @@ void autonomous(void) {
   at_intake = launch_task(std::bind(&intake::intake_task, &Intake));
   at_ladybrown = launch_task(std::bind(&ladybrown::ladybrown_task, &Ladybrown));
 
-  //centerMogo();
+  centerMogo();
 
 
-  skills();
+  //skills();
 }
 
 /* ---------- User Control Functions ---------- */
@@ -397,7 +465,7 @@ int ladybrown_control_task()
 
   while(true)
   {
-    if(Controller1.ButtonR1.pressing() && !R1_wasPressing && ladybrownTarget < 4) 
+    if(Controller1.ButtonR1.pressing() && !R1_wasPressing && ladybrownTarget < 3) 
     {
       ladybrownTarget++;
 
@@ -410,11 +478,8 @@ int ladybrown_control_task()
         Ladybrown.setTarget(ladybrown::READY);
         break;
       case 3:
-        Ladybrown.setTarget(ladybrown::STORAGE);
-        break;    
-      default:
         Ladybrown.setTarget(ladybrown::SCORE);
-        break;
+        break;    
       }
 
       Controller1.rumble(".");
@@ -437,15 +502,10 @@ int ladybrown_control_task()
         Controller1.Screen.print("READY");
         break;
       case 3:
-        Ladybrown.setTarget(ladybrown::STORAGE);
-        Controller1.Screen.clearLine();
-        Controller1.Screen.print("STORAGE");
-        break;    
-      default:
         Ladybrown.setTarget(ladybrown::SCORE);
         Controller1.Screen.clearLine();
         Controller1.Screen.print("SCORE");
-        break;
+        break; 
       }
 
       Controller1.rumble(".");
