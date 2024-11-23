@@ -134,7 +134,7 @@ int intake_task() {
                 if (ejectRing) {
                     if (abs(((int)HookIntake.position(vex::rotationUnits::deg) % ringEjectPosition) - ringEjectPosition) < 35) {
                         if(Competition.isAutonomous()){
-                            task::sleep(50);
+                            task::sleep(20);
                             Intake_group.spin(reverse, 100, percent);
                             task::sleep(120);
                             Intake_group.spin(forward, 100, percent);
@@ -171,6 +171,9 @@ int intake_task() {
     }
 }
 
+
+
+
 //------------------------------------------------------------------------------
 // Pre-Autonomous Functions
 //------------------------------------------------------------------------------
@@ -206,21 +209,77 @@ void pre_auton(void) {
 /**
  * @brief Function to handle autonomous control.
  */
-/*
+
 void skills(void) {
-    redirectRing = true;
     Inertial.setHeading(220, degrees);
 
     Drivetrain.setDriveConstants(0.95, 0.005, 1, 9, 0.25, 30, -12, 12, 0.5);
     Drivetrain.setTurnConstants(0.128, 0.005, 0.025, 5, 0.05, 50, -12, 12);
     Drivetrain.setSwingConstants(0.25, 0.0, 0.225, 15, 0.5, 50, -12, 12);
     Drivetrain.setArcConstants(0.325, 0.01, 0.7, 15, 0.5, 50, -12, 12);
+
+    intakeOn = true;
     vex::thread intake_Functionality = vex::thread(intake_task);
-    task::sleep(2000);
-    Intake_group.spin(forward, 100, percent);
     ClampMotor.on();
+    waitUntil(2000);
+
+    Drivetrain.driveFor(27.5);
+    intakeOn = false;
+    Drivetrain.turnFor(-90, 1);
+    Drivetrain.driveFor(-30, 1);
+    Drivetrain.driveFor(-2.5, 1);
+    Drivetrain.driveFor(-2.5, 1);
+    waitUntil(1000);
+    ClampMotor.off();
+    waitUntil(500);
+    intakeOn = true;
+
+    
+    Drivetrain.arcFor(right, (7), 175, 1.5);
+    
+    Drivetrain.driveFor(10, 1.5);
+    Drivetrain.driveFor(-10, 1.5);
+
+    Drivetrain.turnFor(87.5, 1.5);
+    Drivetrain.driveFor(48, 2);
+    MotorGroupLeft.stop(coast);
+    MotorGroupRight.stop(coast);
 
 
+    Drivetrain.turnFor(-45, 1);
+
+    Drivetrain.driveFor(15, 1);
+
+    Drivetrain.driveFor(2.5, .5);
+    Drivetrain.driveFor(2.5, .5);
+    Drivetrain.driveFor(-20, 1);
+    Drivetrain.turnFor(180, 2);
+    Intake_group.spin(reverse, 100, percent);
+    waitUntil(1000);
+    ClampMotor.on();
+    Drivetrain.driveFor(-20, 2);
+    Drivetrain.driveFor(-5, 1);
+    Drivetrain.driveFor(14, .5);
+    Drivetrain.turnFor(50, 1);
+    Drivetrain.driveFor(75, .5);
+    
+    Drivetrain.turnFor(90);
+    intakeOn = false;
+    Drivetrain.driveFor(-20);
+    ClampMotor.off();
+    intakeOn = true;
+    Drivetrain.turnFor(90);
+    Drivetrain.driveFor(20);
+    Drivetrain.turnFor(90);
+
+
+
+
+
+
+
+
+    /*
     Drivetrain.swingFor(right, 77.0, 0.7);
     Drivetrain.driveFor(17, 1);
     task::sleep(1000);
@@ -229,10 +288,7 @@ void skills(void) {
     
     Drivetrain.turnFor(88, 1);
     Drivetrain.driveFor(-17);
-    Intake_group.stop();
-    waitUntil(400);
     ClampMotor.off();
-    Intake_group.spin(forward, 100, percent);
     Drivetrain.swingFor(right, 190.0, 1.5);
     Drivetrain.driveFor(30 + 3);
     Drivetrain.swingFor(right, 50, 1);
@@ -242,10 +298,10 @@ void skills(void) {
     ClawMotorGroup.spinFor(1400, degrees);
     Drivetrain.driveFor(8, 0.7);
     ClawMotorGroup.spinFor(-(1400 - 600), degrees);
+    */
 }
-*/
-void autonomous(void) {
-    
+
+void match(void) {
     Inertial.setHeading(220, degrees);
 
     Drivetrain.setDriveConstants(0.95, 0.005, 1, 9, 0.25, 30, -12, 12, 0.5);
@@ -255,6 +311,10 @@ void autonomous(void) {
     Intake_group.spin(forward, 100, percent);
     redirectMode = false;
     intakeOn = true;
+
+
+    
+
     vex::thread intake_Functionality = vex::thread(intake_task);
     
     
@@ -292,6 +352,13 @@ void autonomous(void) {
     ClawMotorGroup.setTimeout(1, seconds);
     ClawMotorGroup.spinFor(800, degrees);
     Drivetrain.driveFor(73, 1);
+
+}
+void autonomous(void) {
+    
+    //match();
+    skills();
+
     
 
 
