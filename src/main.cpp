@@ -67,6 +67,8 @@ vex::task at_ladybrown;
 
 vex::task gt_odometry;
 
+bool isRed = false;
+
 /* ---------- Global Problem Solvers ---------- */
 
 /**
@@ -330,18 +332,25 @@ void centerMogo()
 {
 
   int microsecondsStart = Brain.Timer.systemHighResolution();
-  Inertial.setHeading(105, deg);
+  if(isRed) Inertial.setHeading(105, deg);
+  else Inertial.setHeading(255, deg);
+
+  int mult = (isRed) ? 1 : -1;
   Ladybrown.setTarget(Ladybrown.DOWN);
   Intake.setSpeed(100);
   task stopIntake = launch_task(std::bind(holdRing, 2));
 
   Drivetrain.driveFor(43.5);
-  Drivetrain.turnTo(0);
+  Drivetrain.turnTo(0 * mult);
   waitUntil((int)IntakeGroup.position(deg) % 1920 > 400 || IntakeGroup.velocity(pct) < 5);
   Intake.setSpeed(0);
   Drivetrain.driveFor(-5);
-  Drivetrain.swingFor(right, -60, 1.5);
+
+  if(isRed) Drivetrain.swingFor(right, -60, 1.5);
+  else Drivetrain.swingFor(left, -60, 1.5);
+
   Drivetrain.driveFor(3, 1.5);
+
   Drivetrain.driveFor(-6);
   MogoClamp.off();
   task::sleep(250);
@@ -349,32 +358,33 @@ void centerMogo()
   stopIntake.stop();
   Intake.setSpeed(100);
   task::sleep(5000);
-  Drivetrain.swingFor(right, 35, 1.5);
+  if(isRed)Drivetrain.swingFor(right, 35, 1.5);
+  else Drivetrain.swingFor(left, 35, 1.5);
 
   Drivetrain.driveFor(32);
   Drivetrain.driveFor(8);
   Drivetrain.driveFor(-8);
 
-  Drivetrain.turnFor(180);
+  Drivetrain.turnFor(180 * mult);
   Drivetrain.driveFor(34);
-  Drivetrain.turnTo(210);
+  Drivetrain.turnTo(210 * mult);
 
   Drivetrain.driveFor(36);
   Drivetrain.driveFor(-6);
-  Drivetrain.turnTo(180);
+  Drivetrain.turnTo(180 * mult);
   Drivetrain.driveFor(26);
   task::sleep(500);
 
-  Drivetrain.turnTo(343);
+  Drivetrain.turnTo(343 * mult);
   Drivetrain.driveFor(100);
-  Drivetrain.turnTo(135);
+  Drivetrain.turnTo(135 * mult);
   MogoClamp.on();
   Drivetrain.setDriveSpeed(-4, volt);
 
   task::sleep(2000);
 
   Drivetrain.driveFor(12);
-  Drivetrain.turnTo(270);
+  Drivetrain.turnTo(270 * mult);
   Drivetrain.driveFor(-40);
 
 
