@@ -157,6 +157,7 @@ int intake_task() {
                         task::sleep(1000);
                         Intake_group.spin(forward, 100, percent);
                         redirectRing = false;
+                        redirectMode = false;
                     }
                 } else {
                     Intake_group.spin(forward, 100, percent);
