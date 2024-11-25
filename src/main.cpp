@@ -1,7 +1,7 @@
 /*----------------------------------------------------------------------------*/
 /*                                                                            */
 /*    Module:       main.cpp                                                  */
-/*    Author:       closm                                                     */
+/*    Author:       Closm, Kinde                                              */
 /*    Created:      9/11/2024, 10:36:44 AM                                    */
 /*    Description:  V5 project                                                */
 /*                                                                            */
@@ -174,6 +174,7 @@ int intake_task() {
 
 
 
+
 //------------------------------------------------------------------------------
 // Pre-Autonomous Functions
 //------------------------------------------------------------------------------
@@ -227,6 +228,35 @@ void pre_auton(void) {
     Drivetrain.swingFor()
  }
  */
+
+ void approach(double distance, double timeout){
+    Drivetrain.driveFor((distance/2), timeout);
+    Drivetrain.setDriveSpeed(25, velocityUnits::pct);
+    Drivetrain.driveFor(((distance/2)/2), timeout);
+    Drivetrain.setDriveSpeed(15, velocityUnits::pct);
+    Drivetrain.driveFor(((distance/2)/2), timeout);
+    Drivetrain.setDriveSpeed(100, velocityUnits::pct);
+
+ }
+
+void Setup(void){
+    Inertial.setHeading(220, degrees);
+
+    Drivetrain.setDriveConstants(0.95, 0.005, 1, 9, 0.25, 30, -12, 12, 0.5);
+    Drivetrain.setTurnConstants(0.128, 0.005, 0.025, 5, 0.05, 50, -12, 12);
+    Drivetrain.setSwingConstants(0.25, 0.0, 0.225, 15, 0.5, 50, -12, 12);
+    Drivetrain.setArcConstants(0.325, 0.01, 0.7, 15, 0.5, 50, -12, 12);
+    Intake_group.spin(forward, 100, percent);
+    redirectMode = false;
+    intakeOn = true;
+
+    vex::thread intake_Functionality = vex::thread(intake_task);
+    
+    
+    ClampMotor.on();
+
+    
+}
 void skills(void) {
     Inertial.setHeading(220, degrees);
 
@@ -237,70 +267,60 @@ void skills(void) {
     intakeOn = true;
     vex::thread intake_Functionality = vex::thread(intake_task);
     ClampMotor.on();
-    waitUntil(2000);
 
 
-    Drivetrain.driveFor(27.5);
+    approach(27.5, 1);
     intakeOn = false;
     Drivetrain.turnFor(-90, 1);
-    Drivetrain.driveFor(-30, 1);
-    Drivetrain.driveFor(-2.5, 1);
-    Drivetrain.driveFor(-2.5, 1);
-    waitUntil(1000);
+    approach(-30, 1);
+    waitUntil(500);
     ClampMotor.off();
-    waitUntil(1000);
+    waitUntil(500);
     intakeOn = true;
 
     
     Drivetrain.arcFor(right, (7), 175, 1.5);
 
-    Drivetrain.driveFor(10, 1.5);
-    Drivetrain.driveFor(-10, 1.5);
+    approach(10, 1.5);
+    approach(-10, 1.5);
 
     Drivetrain.turnFor(87.5, 1.5);
-    Drivetrain.driveFor(48, 2);
-    MotorGroupLeft.stop(coast);
-    MotorGroupRight.stop(coast);
-    Drivetrain.driveFor(-2, 1);
-
+    approach(50, 2);
 
 
     Drivetrain.turnFor(-45, 1);
 
-    Drivetrain.driveFor(15, 1);
-    Drivetrain.driveFor(2.5, .5);
-    Drivetrain.driveFor(2.5, .5);
+    approach(20, 1);
 
-    Drivetrain.driveFor(-20, 1);
+    approach(-20, 1);
     Drivetrain.turnFor(180, 2);
     Intake_group.spin(reverse, 100, percent);
     waitUntil(1000);
     ClampMotor.on();
-    Drivetrain.driveFor(-20, 2);
-    Drivetrain.driveFor(-5, 1);
-    Drivetrain.driveFor(15, .5);
+    approach(-25, 2);
+    approach(15, .5);
     Drivetrain.turnFor(50, 1);
-    Drivetrain.driveFor(73, 2);
+    approach(73, 2);
 
 
 
     Drivetrain.turnFor(80, 1);
     intakeOn = false;
-    Drivetrain.driveFor(-18, 1);
-    Drivetrain.driveFor(-2, 1);
-
+    Intake_group.spin(reverse, 100, percent);
+    waitUntil(1000);
+    approach(-20, 1);
     ClampMotor.off();
     intakeOn = true;
     Drivetrain.turnFor(-90, 1);
-    Drivetrain.driveFor(24, 1);
+    approach(24, 1);
     Drivetrain.turnFor(90, 1);
-    Drivetrain.driveFor(10, 1);
+    approach(10, 1);
     Drivetrain.turnFor(-35, 1);
-    Drivetrain.driveFor(30, 1);
-    Drivetrain.driveFor(-10, 1);
+    approach(30, 1);
+    approach(-10, 1);
     Drivetrain.turnFor(180, 1);
     ClampMotor.on();
-    Drivetrain.driveFor(-10, 1);
+    approach(-10, 1);
     intakeOn = false;
     ClawMotorGroup.setVelocity(100, percent);
     ClawMotorGroup.spinFor(1400, degrees);
@@ -319,6 +339,7 @@ void skills(void) {
 }
 
 void matchBlue(void){
+    /*
     Inertial.setHeading(220, degrees);
 
     Drivetrain.setDriveConstants(0.95, 0.005, 1, 9, 0.25, 30, -12, 12, 0.5);
@@ -367,6 +388,13 @@ void matchBlue(void){
     ClawMotorGroup.setTimeout(1, seconds);
     ClawMotorGroup.spinFor(800, degrees);
     Drivetrain.driveFor(73, 1);
+    Drivetrain.spinFor(45, 1);
+    Drivetrain.driveFor(20, 1);
+    Drivetrain.driveFor(-10, 1);
+    Drivetrain.spinFor(180, 1);
+    Drivetrain.driveFor(-10, 1);
+*/
+
 
 
 }
@@ -399,66 +427,61 @@ Inertial.setHeading(220, degrees);
     Drivetrain.turnFor(-90, 1);
     Drivetrain.driveFor(40);
     Drivetrain.turnFor(-135, 1);
-    ClampMotor.on();
     Drivetrain.driveFor(-24, 1);
     Drivetrain.driveFor(15, 1);
+    ClampMotor.on();
 
 }
 void match(void) {
-    Inertial.setHeading(220, degrees);
 
-    Drivetrain.setDriveConstants(0.95, 0.005, 1, 9, 0.25, 30, -12, 12, 0.5);
-    Drivetrain.setTurnConstants(0.128, 0.005, 0.025, 5, 0.05, 50, -12, 12);
-    Drivetrain.setSwingConstants(0.25, 0.0, 0.225, 15, 0.5, 50, -12, 12);
-    Drivetrain.setArcConstants(0.325, 0.01, 0.7, 15, 0.5, 50, -12, 12);
-    Intake_group.spin(forward, 100, percent);
-    redirectMode = false;
-    intakeOn = true;
+    Setup();
 
-    vex::thread intake_Functionality = vex::thread(intake_task);
-    
-    
-    ClampMotor.on();
-    Drivetrain.driveFor(-16, .5);
+
+//grabs mogo and scores wall stake
+    approach(-16, 1);
     ClampMotor.off();
     Intake_group.spin(forward, 100, percent);
     waitUntil(1000);
     Drivetrain.swingFor(left, -55, .5);
     ClawMotorGroup.setVelocity(100, percent);
     ClawMotorGroup.spinFor(660, degrees);
-    Drivetrain.driveFor(15, 1);
+    approach(15, 1);
     ClawMotorGroup.spinFor(-(660-370), degrees);
-    Drivetrain.driveFor(-11);
-    
+    approach(-11, 1);
+
+ //goes for little bots match setup ring then grabs bottom ring of the stack and turns to the corner to intake bottom ring   
     Drivetrain.swingFor(left, -50, .5);
-    Drivetrain.driveFor(20, 1);
+    approach(20, 1);
     Drivetrain.swingFor(right, 60, 1);
-    Drivetrain.driveFor(23, .8);
+    approach(23, .8);
     waitUntil(750);
     Drivetrain.swingFor(left, 60, .5);
     ClawMotorGroup.spinFor(190, degrees);
-    Drivetrain.driveFor(14, 2);
-    Drivetrain.driveFor(-7, .7);
+    approach(14, 1);
+    approach(-7, .7);
     ClawMotorGroup.spinFor(-190, degrees);
+
+//aims itself at the stack closest to the postive intakes bottom ring then 
+//turns into corner intakes bottom ring then does a 180 realses mogo into the postive side
     Drivetrain.swingFor(right, -130.5, 1);
-    Drivetrain.driveFor(92.3, 4);
+    approach(92.3, 3);
     Drivetrain.turnFor(35, .7);
-    Drivetrain.driveFor(25, 2);
-    Drivetrain.driveFor(-15, 1);
+    approach(25, 1);
+    approach(-15, 1);
     Drivetrain.turnFor(190, 2);
     Intake_group.spin(reverse, 100, percent);
     ClampMotor.on();
-    Drivetrain.driveFor(-10, 1);
-    Drivetrain.driveFor(-20, 1);
+    approach(-10, 1);
+    approach(-20, 1);
     ClawMotorGroup.setTimeout(1, seconds);
     ClawMotorGroup.spinFor(800, degrees);
-    Drivetrain.driveFor(73, 1);
+    approach(73, 1);
 
 }
 void autonomous(void) {
-    matchwinpoint();
+    //matchwinpoint();
     //match();
-    //skills();
+    skills();
     //matchBlue();
     
 
