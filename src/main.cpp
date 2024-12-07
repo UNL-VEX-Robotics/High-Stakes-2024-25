@@ -42,7 +42,7 @@ motor HookIntake = motor(PORT2, true);
 motor FrontIntake = motor(PORT1, true);
 motor_group Intake_group = motor_group(HookIntake, FrontIntake);
 
-// Claw Motors
+// Lady Brown motors just named as Claw Motors
 motor ClawMotorLeft = motor(PORT11);
 motor ClawMotorRight = motor(PORT12, true);
 motor_group ClawMotorGroup = motor_group(ClawMotorLeft, ClawMotorRight);
@@ -61,12 +61,13 @@ chassis Drivetrain = chassis(std::bind(&odometry::getPosition, &Odom), &MotorGro
 // Control Variables
 bool toggle = false;
 bool wasPressing = false;
+bool isReverse = false;
 bool XwasPressing = false;
 bool wasYPressing = false;
 bool RightwasPressing = false;
 bool clawPresetEnabled = false;
-bool redirectMode = false;
-bool ejectRing = false;
+bool redirectMode = false; //will delete
+bool ejectRing = false; //will delete
 
 // Optical sensor
 optical Optical = optical(PORT4);
@@ -105,66 +106,26 @@ int intake_task() {
     Optical.integrationTime(5);
 
     while (true) {
-        if (Controller.ButtonUp.pressing() && !wasPressing) intakeOn = !intakeOn;
-        wasPressing = Controller.ButtonUp.pressing();
 
-        if (Controller.ButtonY.pressing() && !wasYPressing) {
-            redirectMode = !redirectMode; // Toggle redirect mode
+        //turns the intake on and off
+        if (Controller.ButtonL1.pressing()) {
+            wasPressing = !wasPressing; 
+        } 
+
+        //determines which direction the intake is turning
+        if (Controller.ButtonL2.pressing()) {
+            isReverse = !isReverse;
         }
-        wasYPressing = Controller.ButtonY.pressing();
 
-        if (Controller.ButtonDown.pressing()) {
-            Intake_group.spin(reverse, 100, percent);
-        } else {
-            if (intakeOn) {
-                if (Optical.isNearObject()) {
-                    Optical.setLight(ledState::on);
-
-                    if ((!isRed && isRedRing(Optical.color())) || (isRed && isBlueRing(Optical.color()))) {
-                        ejectRing = true;
-                    }
-
-                    if (((isRed && isRedRing(Optical.color())) || (!isRed && isBlueRing(Optical.color()))) && (redirectMode)) {
-                        redirectRing = true;
-                    }
-                } else {
-                    Optical.setLight(ledState::off);
-                }
-
-                if (ejectRing) {
-                    if (abs(((int)HookIntake.position(vex::rotationUnits::deg) % ringEjectPosition) - ringEjectPosition) < 35) {
-                        if(Competition.isAutonomous()){
-                            task::sleep(20);
-                            Intake_group.spin(reverse, 100, percent);
-                            task::sleep(120);
-                            Intake_group.spin(forward, 100, percent);
-                            ejectRing = false;
-                        }
-                        task::sleep(0);
-                        Intake_group.spin(reverse, 100, percent);
-                        task::sleep(120);
-                        Intake_group.spin(forward, 100, percent);
-                        ejectRing = false;
-                    }
-                } else {
-                    Intake_group.spin(forward, 100, percent);
-                }
-
-                if (redirectRing) {
-                    if (abs((((int)HookIntake.position(deg)) % ringRedirectPosition) - (ringRedirectPosition - 40)) < 35) {
-                        task::sleep(27);
-                        Intake_group.spin(reverse, 100, percent);
-                        task::sleep(1000);
-                        Intake_group.spin(forward, 100, percent);
-                        redirectRing = false;
-                        redirectMode = false;
-                    }
-                } else {
-                    Intake_group.spin(forward, 100, percent);
-                }
+        if (wasPressing) {
+            if (isReverse) {
+               Intake_group.spin(reverse, 100, percent); 
             } else {
-                Intake_group.stop(brake);
+                Intake_group.spin(forward, 100, percent); 
             }
+
+        } else {
+            Intake_group.stop(brake);
         }
 
         task::sleep(5);
@@ -309,8 +270,6 @@ void match(void) {
     Drivetrain.setSwingConstants(0.25, 0.0, 0.225, 15, 0.5, 50, -12, 12);
     Drivetrain.setArcConstants(0.325, 0.01, 0.7, 15, 0.5, 50, -12, 12);
     Intake_group.spin(forward, 100, percent);
-    redirectMode = false;
-    intakeOn = true;
 
 
     
