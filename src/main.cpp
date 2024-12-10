@@ -24,10 +24,10 @@ competition Competition;
 controller Controller = controller();
 
 // Motors for Left Side
-motor Left_Motor1 = motor(PORT3, ratio6_1);
-motor Left_Motor2 = motor(PORT4, ratio6_1);
-motor Left_Motor3 = motor(PORT6, ratio6_1);
-motor Left_Motor4 = motor(PORT5, ratio6_1, true);
+motor Left_Motor1 = motor(PORT3, ratio6_1, true);
+motor Left_Motor2 = motor(PORT4, ratio6_1, true);
+motor Left_Motor3 = motor(PORT6, ratio6_1, true);
+motor Left_Motor4 = motor(PORT5, ratio6_1);
 motor_group MotorGroupLeft = motor_group(Left_Motor1, Left_Motor2, Left_Motor3, Left_Motor4);
 
 // Motors for Right Side
@@ -39,7 +39,7 @@ motor_group MotorGroupRight = motor_group(Right_Motor1, Right_Motor2, Right_Moto
 
 // Intake Motors
 motor HookIntake = motor(PORT2);
-motor FrontIntake = motor(PORT1);
+motor FrontIntake = motor(PORT1, true);
 motor_group Intake_group = motor_group(HookIntake, FrontIntake);
 
 // Lady Brown motors just named as Claw Motors
@@ -59,11 +59,11 @@ vex::brain Brain;
 led ClampMotor = led(Brain.ThreeWirePort.A);
 led RatchetMotor = led(Brain.ThreeWirePort.C);
 
-inertial Inertial = inertial(PORT3);
+inertial Inertial = inertial(PORT20);
 Graph graph = Graph(&Brain.Screen);
 
 odometry Odom = odometry(odometry::odometry_pod(odometry::odometry_pod::VERTICAL, &Right_Motor1, 5.656, 0.0212), odometry::odometry_pod(), &Inertial);
-chassis Drivetrain = chassis(std::bind(&odometry::getPosition, &Odom), &MotorGroupLeft, &MotorGroupRight, &Inertial, 11.3125, 0.01701696);
+chassis Drivetrain = chassis(std::bind(&odometry::getPosition, &Odom), &MotorGroupLeft, &MotorGroupRight, &Inertial, 11.3125, 0.0212712);
 
 // Control Variables
 bool toggle = false;
@@ -229,15 +229,14 @@ void pre_auton(void) {
  */
 
 void skills(void) {
-    Inertial.setHeading(220, degrees);
+    Inertial.setHeading(270, degrees);
 
-    Drivetrain.setDriveConstants(0.95, 0.005, 1, 9, 0.25, 30, -12, 12, 0.5);
-    Drivetrain.setTurnConstants(0.128, 0.005, 0.025, 5, 0.05, 50, -12, 12);
-    Drivetrain.setSwingConstants(0.25, 0.0, 0.225, 15, 0.5, 50, -12, 12);
-    Drivetrain.setArcConstants(0.325, 0.01, 0.7, 15, 0.5, 50, -12, 12);
+    Drivetrain.setDriveConstants(0.95, 0.005, 1, 9, 0.75, 30, -12, 12, 0.5);
+    Drivetrain.setTurnConstants(0.15, 0.01, 0.6, 15, 0.5, 50, -12, 12);
+    Drivetrain.setSwingConstants(0.2, 0.005, 0.3, 22, 0.5, 50, -12, 12);
+    Drivetrain.setArcConstants(0.25, 0.01, 0.7, 15, 0.5, 50, -12, 12);
 
-    Drivetrain.driveFor(24, 1);
-
+    Drivetrain.turnFor(90);
 
 }
 
