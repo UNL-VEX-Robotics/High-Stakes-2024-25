@@ -24,28 +24,35 @@ competition Competition;
 controller Controller = controller();
 
 // Motors for Left Side
-motor Left_Motor1 = motor(PORT10, ratio6_1, true);
-motor Left_Motor2 = motor(PORT9, ratio6_1, true);
-motor Left_Motor3 = motor(PORT8, ratio6_1, true);
-motor Left_Motor4 = motor(PORT7, ratio6_1);
+motor Left_Motor1 = motor(PORT3, ratio6_1);
+motor Left_Motor2 = motor(PORT4, ratio6_1);
+motor Left_Motor3 = motor(PORT6, ratio6_1);
+motor Left_Motor4 = motor(PORT5, ratio6_1, true);
 motor_group MotorGroupLeft = motor_group(Left_Motor1, Left_Motor2, Left_Motor3, Left_Motor4);
 
 // Motors for Right Side
-motor Right_Motor1 = motor(PORT20, ratio6_1);
-motor Right_Motor2 = motor(PORT19, ratio6_1);
-motor Right_Motor3 = motor(PORT18, ratio6_1);
-motor Right_Motor4 = motor(PORT17, ratio6_1, true);
+motor Right_Motor1 = motor(PORT10, ratio6_1);
+motor Right_Motor2 = motor(PORT7, ratio6_1);
+motor Right_Motor3 = motor(PORT8, ratio6_1);
+motor Right_Motor4 = motor(PORT9, ratio6_1, true);
 motor_group MotorGroupRight = motor_group(Right_Motor1, Right_Motor2, Right_Motor3, Right_Motor4);
 
 // Intake Motors
-motor HookIntake = motor(PORT2, true);
-motor FrontIntake = motor(PORT1, true);
+motor HookIntake = motor(PORT2);
+motor FrontIntake = motor(PORT1);
 motor_group Intake_group = motor_group(HookIntake, FrontIntake);
 
 // Lady Brown motors just named as Claw Motors
 motor ClawMotorLeft = motor(PORT11);
 motor ClawMotorRight = motor(PORT12, true);
 motor_group ClawMotorGroup = motor_group(ClawMotorLeft, ClawMotorRight);
+
+//arm motors
+motor arm_Left = motor(PORT14);
+motor arm_Right = motor(PORT13, true);
+
+motor_group ArmMotorGroup = motor_group(arm_Left, arm_Right);
+
 
 // Brain and LEDs
 vex::brain Brain;
@@ -106,31 +113,73 @@ int intake_task() {
     Optical.integrationTime(5);
 
     while (true) {
+        if (Controller.ButtonUp.pressing() && !wasPressing) intakeOn = !intakeOn;
+        wasPressing = Controller.ButtonUp.pressing();
 
-        //turns the intake on and off
-        if (Controller.ButtonL1.pressing()) {
-            wasPressing = !wasPressing; 
-        } 
-
-        //determines which direction the intake is turning
-        if (Controller.ButtonL2.pressing()) {
-            isReverse = !isReverse;
+        if (Controller.ButtonY.pressing() && !wasYPressing) {
+            redirectMode = !redirectMode; // Toggle redirect mode
         }
+        wasYPressing = Controller.ButtonY.pressing();
 
-        if (wasPressing) {
-            if (isReverse) {
-               Intake_group.spin(reverse, 100, percent); 
-            } else {
-                Intake_group.spin(forward, 100, percent); 
-            }
-
+        if (Controller.ButtonDown.pressing()) {
+            Intake_group.spin(reverse, 100, percent);
         } else {
-            Intake_group.stop(brake);
+            if (intakeOn) {
+                if (Optical.isNearObject()) {
+                    Optical.setLight(ledState::on);
+
+                    if ((!isRed && isRedRing(Optical.color())) || (isRed && isBlueRing(Optical.color()))) {
+                        ejectRing = true;
+                    }
+
+                    if (((isRed && isRedRing(Optical.color())) || (!isRed && isBlueRing(Optical.color()))) && (redirectMode)) {
+                        redirectRing = true;
+                    }
+                } else {
+                    Optical.setLight(ledState::off);
+                }
+
+                if (ejectRing) {
+                    if (abs(((int)HookIntake.position(vex::rotationUnits::deg) % ringEjectPosition) - ringEjectPosition) < 35) {
+                        if(Competition.isAutonomous()){
+                            task::sleep(50);
+                            task::sleep(20);
+                            Intake_group.spin(reverse, 100, percent);
+                            task::sleep(120);
+                            Intake_group.spin(forward, 100, percent);
+                            ejectRing = false;
+                        }
+                        task::sleep(0);
+                        Intake_group.spin(reverse, 100, percent);
+                        task::sleep(120);
+                        Intake_group.spin(forward, 100, percent);
+                        ejectRing = false;
+                    }
+                } else {
+                    Intake_group.spin(forward, 100, percent);
+                }
+
+                if (redirectRing) {
+                    if (abs((((int)HookIntake.position(deg)) % ringRedirectPosition) - (ringRedirectPosition - 40)) < 35) {
+                        task::sleep(27);
+                        Intake_group.spin(reverse, 100, percent);
+                        task::sleep(1000);
+                        Intake_group.spin(forward, 100, percent);
+                        redirectRing = false;
+                        redirectMode = false;
+                    }
+                } else {
+                    Intake_group.spin(forward, 100, percent);
+                }
+            } else {
+                Intake_group.stop(brake);
+            }
         }
 
         task::sleep(5);
     }
 }
+
 
 
 
@@ -143,6 +192,7 @@ int intake_task() {
  * @brief Function to handle pre-autonomous setup.
  */
 void pre_auton(void) {
+    
     Brain.Screen.clearScreen();
     Brain.Screen.setCursor(1, 1);
     Brain.Screen.setPenColor(white);
@@ -159,8 +209,15 @@ void pre_auton(void) {
     Brain.Screen.print("Calibrated.");
     task::sleep(10);
 
+    //PIDs
+    Drivetrain.setDriveConstants(0.75, 0.005, 1, 9, 0.75, 30, -12, 12, 0.5);
+    Drivetrain.setTurnConstants(0.15, 0.01, 0.6, 15, 0.5, 50, -12, 12);
+    Drivetrain.setSwingConstants(0.2, 0.005, 0.3, 22, 0.5, 50, -12, 12);
+    Drivetrain.setArcConstants(0.25, 0.01, 0.7, 15, 0.5, 50, -12, 12);
+
     Brain.Screen.setPenColor(red);
     Brain.Screen.newLine();
+    
 }
 
 //------------------------------------------------------------------------------
@@ -179,138 +236,15 @@ void skills(void) {
     Drivetrain.setSwingConstants(0.25, 0.0, 0.225, 15, 0.5, 50, -12, 12);
     Drivetrain.setArcConstants(0.325, 0.01, 0.7, 15, 0.5, 50, -12, 12);
 
-    intakeOn = true;
-    vex::thread intake_Functionality = vex::thread(intake_task);
-    ClampMotor.on();
-    waitUntil(2000);
-
-    Drivetrain.driveFor(27.5);
-    intakeOn = false;
-    Drivetrain.turnFor(-90, 1);
-    Drivetrain.driveFor(-30, 1);
-    Drivetrain.driveFor(-2.5, 1);
-    Drivetrain.driveFor(-2.5, 1);
-    waitUntil(1000);
-    ClampMotor.off();
-    waitUntil(500);
-    intakeOn = true;
-
-    
-    Drivetrain.arcFor(right, (7), 175, 1.5);
-    
-    Drivetrain.driveFor(10, 1.5);
-    Drivetrain.driveFor(-10, 1.5);
-
-    Drivetrain.turnFor(87.5, 1.5);
-    Drivetrain.driveFor(48, 2);
-    MotorGroupLeft.stop(coast);
-    MotorGroupRight.stop(coast);
+    Drivetrain.driveFor(24, 1);
 
 
-    Drivetrain.turnFor(-45, 1);
-
-    Drivetrain.driveFor(15, 1);
-
-    Drivetrain.driveFor(2.5, .5);
-    Drivetrain.driveFor(2.5, .5);
-    Drivetrain.driveFor(-20, 1);
-    Drivetrain.turnFor(180, 2);
-    Intake_group.spin(reverse, 100, percent);
-    waitUntil(1000);
-    ClampMotor.on();
-    Drivetrain.driveFor(-20, 2);
-    Drivetrain.driveFor(-5, 1);
-    Drivetrain.driveFor(14, .5);
-    Drivetrain.turnFor(50, 1);
-    Drivetrain.driveFor(75, .5);
-    
-    Drivetrain.turnFor(90);
-    intakeOn = false;
-    Drivetrain.driveFor(-20);
-    ClampMotor.off();
-    intakeOn = true;
-    Drivetrain.turnFor(90);
-    Drivetrain.driveFor(20);
-    Drivetrain.turnFor(90);
-
-
-
-
-
-
-
-
-    /*
-    Drivetrain.swingFor(right, 77.0, 0.7);
-    Drivetrain.driveFor(17, 1);
-    task::sleep(1000);
-    redirectRing = false;
-    Drivetrain.driveFor(-24.5);
-    
-    Drivetrain.turnFor(88, 1);
-    Drivetrain.driveFor(-17);
-    ClampMotor.off();
-    Drivetrain.swingFor(right, 190.0, 1.5);
-    Drivetrain.driveFor(30 + 3);
-    Drivetrain.swingFor(right, 50, 1);
-    Drivetrain.driveFor(6, 0.7);
-    Drivetrain.driveFor(-3, 0.5);
-    ClawMotorGroup.setVelocity(100, percent);
-    ClawMotorGroup.spinFor(1400, degrees);
-    Drivetrain.driveFor(8, 0.7);
-    ClawMotorGroup.spinFor(-(1400 - 600), degrees);
-    */
 }
 
 void match(void) {
-    Inertial.setHeading(220, degrees);
-
-    Drivetrain.setDriveConstants(0.95, 0.005, 1, 9, 0.25, 30, -12, 12, 0.5);
-    Drivetrain.setTurnConstants(0.128, 0.005, 0.025, 5, 0.05, 50, -12, 12);
-    Drivetrain.setSwingConstants(0.25, 0.0, 0.225, 15, 0.5, 50, -12, 12);
-    Drivetrain.setArcConstants(0.325, 0.01, 0.7, 15, 0.5, 50, -12, 12);
-    Intake_group.spin(forward, 100, percent);
-
-
-    
-
+    Inertial.setHeading(220, degrees);    
     vex::thread intake_Functionality = vex::thread(intake_task);
-    
-    
-    ClampMotor.on();
-    Drivetrain.driveFor(-14, .5);
-    ClampMotor.off();
-    Intake_group.spin(forward, 100, percent);
-    Drivetrain.swingFor(left, -50, .5);
-    ClawMotorGroup.setVelocity(100, percent);
-    ClawMotorGroup.spinFor(660, degrees);
-    Drivetrain.driveFor(15, 0.7);
-    ClawMotorGroup.spinFor(-(660-370), degrees);
-    Drivetrain.driveFor(-11);
-    
-    Drivetrain.swingFor(left, -50, .5);
-    Drivetrain.driveFor(20, 1);
-    Drivetrain.swingFor(right, 60, 1);
-    Drivetrain.driveFor(23, .8);
-    waitUntil(750);
-    Drivetrain.swingFor(left, 60, .5);
-    ClawMotorGroup.spinFor(190, degrees);
-    Drivetrain.driveFor(14, 2);
-    Drivetrain.driveFor(-7, .7);
-    ClawMotorGroup.spinFor(-190, degrees);
-    Drivetrain.swingFor(right, -130.5, 1);
-    Drivetrain.driveFor(92.3, 4);
-    Drivetrain.turnFor(35, .7);
-    Drivetrain.driveFor(25, 2);
-    Drivetrain.driveFor(-15, 1);
-    Drivetrain.turnFor(190, 2);
-    Intake_group.spin(reverse, 100, percent);
-    ClampMotor.on();
-    Drivetrain.driveFor(-10, 1);
-    Drivetrain.driveFor(-20, 1);
-    ClawMotorGroup.setTimeout(1, seconds);
-    ClawMotorGroup.spinFor(800, degrees);
-    Drivetrain.driveFor(73, 1);
+
 
 }
 void autonomous(void) {
@@ -348,13 +282,23 @@ void usercontrol(void) {
             RatchetMotor.set(!RatchetMotor);
         }
 
-        if (Controller.ButtonR2.pressing()) {
+        if (Controller.ButtonX.pressing()) {
             ClawMotorGroup.spin(reverse, 100, percent);
-        }else if (Controller.ButtonR1.pressing()) {
+        }else if (Controller.ButtonB.pressing()) {
             ClawMotorGroup.spin(forward, 100, percent);
         }
         else{
           ClawMotorGroup.stop();
+        }
+
+        if (Controller.ButtonR2.pressing()) {
+            ArmMotorGroup.spin(fwd, 100, percent);
+        }
+        else if (Controller.ButtonR1.pressing()) {
+            ArmMotorGroup.spin(reverse, 100, percent);
+        }
+        else{
+            ArmMotorGroup.stop(brake);
         }
         
 
@@ -364,8 +308,8 @@ void usercontrol(void) {
         XwasPressing = Controller.ButtonX.pressing();
 
         // Set Drivetrain control
-        MotorGroupLeft.spin(fwd, Controller.Axis3.position(), percent);
-        MotorGroupRight.spin(fwd, Controller.Axis2.position(), percent);
+        MotorGroupLeft.spin(reverse, Controller.Axis1.position() + Controller.Axis3.position(), percent);
+        MotorGroupRight.spin(reverse, Controller.Axis1.position() - Controller.Axis3.position() , percent);
         task::sleep(20);
     }
 }
