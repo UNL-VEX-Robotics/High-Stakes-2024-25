@@ -56,7 +56,7 @@ motor_group ArmMotorGroup = motor_group(arm_Left, arm_Right);
 
 // Brain and LEDs
 vex::brain Brain;
-led ClampMotor = led(Brain.ThreeWirePort.A);
+led ClampMotor = led(Brain.ThreeWirePort.G);
 led RatchetMotor = led(Brain.ThreeWirePort.C);
 
 inertial Inertial = inertial(PORT20);
@@ -236,7 +236,19 @@ void skills(void) {
     Drivetrain.setSwingConstants(0.2, 0.005, 0.3, 22, 0.5, 50, -12, 12);
     Drivetrain.setArcConstants(0.25, 0.01, 0.7, 15, 0.5, 50, -12, 12);
 
-    Drivetrain.turnFor(90);
+    Intake_group.spin(forward, 100, percent);
+    Drivetrain.driveFor(42,2);
+    Intake_group.stop(brake);
+    Drivetrain.turnFor(-90);
+    wait(1,seconds);
+    Drivetrain.driveFor(-40,1);
+    wait(1, seconds);
+    ClampMotor.set(!ClampMotor);
+    Drivetrain.driveFor(7);
+    Intake_group.spin(forward, 100, percent);
+    Drivetrain.turnFor(-90);
+    Drivetrain.driveFor(22, 2);
+
 
 }
 
