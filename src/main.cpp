@@ -38,8 +38,8 @@ motor Right_Motor4 = motor(PORT9, ratio6_1, true);
 motor_group MotorGroupRight = motor_group(Right_Motor1, Right_Motor2, Right_Motor3, Right_Motor4);
 
 // Intake Motors
-motor HookIntake = motor(PORT2);
-motor FrontIntake = motor(PORT1, true);
+motor HookIntake = motor(PORT2, true);
+motor FrontIntake = motor(PORT1);
 motor_group Intake_group = motor_group(HookIntake, FrontIntake);
 
 // Lady Brown motors just named as Claw Motors
@@ -209,11 +209,6 @@ void pre_auton(void) {
     Brain.Screen.print("Calibrated.");
     task::sleep(10);
 
-    //PIDs
-    Drivetrain.setDriveConstants(0.75, 0.005, 1, 9, 0.75, 30, -12, 12, 0.5);
-    Drivetrain.setTurnConstants(0.15, 0.01, 0.6, 15, 0.5, 50, -12, 12);
-    Drivetrain.setSwingConstants(0.2, 0.005, 0.3, 22, 0.5, 50, -12, 12);
-    Drivetrain.setArcConstants(0.25, 0.01, 0.7, 15, 0.5, 50, -12, 12);
 
     Brain.Screen.setPenColor(red);
     Brain.Screen.newLine();
@@ -232,22 +227,36 @@ void skills(void) {
     Inertial.setHeading(270, degrees);
 
     Drivetrain.setDriveConstants(0.95, 0.005, 1, 9, 0.75, 30, -12, 12, 0.5);
-    Drivetrain.setTurnConstants(0.15, 0.01, 0.6, 15, 0.5, 50, -12, 12);
+    Drivetrain.setTurnConstants(0.19, 0.01, 0.6, 15, 0.5, 50, -12, 12);
     Drivetrain.setSwingConstants(0.2, 0.005, 0.3, 22, 0.5, 50, -12, 12);
     Drivetrain.setArcConstants(0.25, 0.01, 0.7, 15, 0.5, 50, -12, 12);
 
+    ClawMotorGroup.stop(brake);
+    ArmMotorGroup.stop(brake);
     Intake_group.spin(forward, 100, percent);
-    Drivetrain.driveFor(42,2);
+    Drivetrain.driveFor(34,2);
+    wait(.5, seconds);
+    Drivetrain.driveFor(-3,2);
     Intake_group.stop(brake);
     Drivetrain.turnFor(-90);
-    wait(1,seconds);
-    Drivetrain.driveFor(-40,1);
-    wait(1, seconds);
+    wait(.25,seconds);
+    Drivetrain.driveFor(-25,1);
+    wait(.25, seconds);
     ClampMotor.set(!ClampMotor);
-    Drivetrain.driveFor(7);
+    wait(.25, seconds);
     Intake_group.spin(forward, 100, percent);
     Drivetrain.turnFor(-90);
-    Drivetrain.driveFor(22, 2);
+    Drivetrain.driveFor(24, 2);
+    Drivetrain.turnFor(-40, 1);
+    Drivetrain.driveFor(20, 1);
+    wait(.25, seconds);
+    Drivetrain.driveFor(-15, 1);
+    Drivetrain.turnFor(-180, 1);
+    wait(.5, seconds);
+    ClampMotor.on();
+    Drivetrain.driveFor(-20, 1);
+    Drivetrain.swingFor(right, 45, .7);
+    Drivetrain.driveFor(40, 2);
 
 
 }
@@ -299,7 +308,7 @@ void usercontrol(void) {
             ClawMotorGroup.spin(forward, 100, percent);
         }
         else{
-          ClawMotorGroup.stop();
+          ClawMotorGroup.stop(brake);
         }
 
         if (Controller.ButtonR2.pressing()) {
@@ -319,8 +328,8 @@ void usercontrol(void) {
         XwasPressing = Controller.ButtonX.pressing();
 
         // Set Drivetrain control
-        MotorGroupLeft.spin(reverse, Controller.Axis1.position() + Controller.Axis3.position(), percent);
-        MotorGroupRight.spin(reverse, Controller.Axis1.position() - Controller.Axis3.position() , percent);
+        MotorGroupLeft.spin(fwd, Controller.Axis3.position() + Controller.Axis1.position(), percent);
+        MotorGroupRight.spin(fwd, Controller.Axis3.position() - Controller.Axis1.position() , percent);
         task::sleep(20);
     }
 }
