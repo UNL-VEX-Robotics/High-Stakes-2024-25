@@ -57,7 +57,7 @@ motor_group ArmMotorGroup = motor_group(arm_Left, arm_Right);
 // Brain and LEDs
 vex::brain Brain;
 led ClampMotor = led(Brain.ThreeWirePort.G);
-led RatchetMotor = led(Brain.ThreeWirePort.C);
+led IntakeMotor = led(Brain.ThreeWirePort.F);
 
 inertial Inertial = inertial(PORT20);
 Graph graph = Graph(&Brain.Screen);
@@ -75,6 +75,7 @@ bool RightwasPressing = false;
 bool clawPresetEnabled = false;
 bool redirectMode = false; //will delete
 bool ejectRing = false; //will delete
+bool YwasPressing = false;
 
 // Optical sensor
 optical Optical = optical(PORT4);
@@ -181,7 +182,9 @@ int intake_task() {
 }
 
 
-
+task auton_eject() {
+    
+}
 
 
 //------------------------------------------------------------------------------
@@ -213,6 +216,11 @@ void pre_auton(void) {
     Brain.Screen.setPenColor(red);
     Brain.Screen.newLine();
     
+    Inertial.setHeading(270, degrees);
+    Drivetrain.setDriveConstants(0.95, 0.005, 1, 9, 0.75, 30, -12, 12, 0.5);
+    Drivetrain.setTurnConstants(0.20, 0.01, 0.48, 15, 0.5, 50, -12, 12);
+    Drivetrain.setSwingConstants(0.2, 0.005, 0.3, 22, 0.5, 50, -12, 12);
+    Drivetrain.setArcConstants(0.25, 0.01, 0.7, 15, 0.5, 50, -12, 12);
 }
 
 //------------------------------------------------------------------------------
@@ -224,40 +232,63 @@ void pre_auton(void) {
  */
 
 void skills(void) {
-    Inertial.setHeading(270, degrees);
 
-    Drivetrain.setDriveConstants(0.95, 0.005, 1, 9, 0.75, 30, -12, 12, 0.5);
-    Drivetrain.setTurnConstants(0.19, 0.01, 0.6, 15, 0.5, 50, -12, 12);
-    Drivetrain.setSwingConstants(0.2, 0.005, 0.3, 22, 0.5, 50, -12, 12);
-    Drivetrain.setArcConstants(0.25, 0.01, 0.7, 15, 0.5, 50, -12, 12);
-
-    ClawMotorGroup.stop(brake);
-    ArmMotorGroup.stop(brake);
-    Intake_group.spin(forward, 100, percent);
-    Drivetrain.driveFor(34,2);
-    wait(.5, seconds);
-    Drivetrain.driveFor(-3,2);
+    ClawMotorGroup.stop(hold);
+    ArmMotorGroup.stop(hold);
+    Intake_group.spin(forward, 50, percent);
+    Drivetrain.driveFor(32,2);
     Intake_group.stop(brake);
-    Drivetrain.turnFor(-90);
+    wait(0.15,seconds);
+    Drivetrain.turnFor(-75);
     wait(.25,seconds);
-    Drivetrain.driveFor(-25,1);
+    Drivetrain.driveFor(-17);
+    Drivetrain.driveFor(-5);
     wait(.25, seconds);
     ClampMotor.set(!ClampMotor);
-    wait(.25, seconds);
+    wait(0.15, seconds);
     Intake_group.spin(forward, 100, percent);
+    wait(2, seconds);
+    Drivetrain.driveFor(22,1);
+    Intake_group.stop(brake);
+    Drivetrain.turnFor(47);
+    Drivetrain.driveFor(13);
+    Intake_group.spin(forward, 100, percent);
+    Drivetrain.driveFor(4.5);
+    wait(0.25, seconds);
+    Intake_group.stop(brake);
+    Drivetrain.driveFor(-25);
+    ArmMotorGroup.spinFor(590, degrees);
+    ClawMotorGroup.spinFor(-170, degrees);
+    wait(0.25, seconds);
+    Intake_group.spin(forward,100,percent);
+    Drivetrain.turnFor(135);
+    Drivetrain.driveFor(20);
+    wait(0.5, seconds);
+    Intake_group.stop(coast);
     Drivetrain.turnFor(-90);
-    Drivetrain.driveFor(24, 2);
-    Drivetrain.turnFor(-40, 1);
-    Drivetrain.driveFor(20, 1);
-    wait(.25, seconds);
-    Drivetrain.driveFor(-15, 1);
+    ArmMotorGroup.spinFor(-295, degrees);
+    Intake_group.spin(forward, 100, percent);
+    Drivetrain.driveFor(22);
+    wait(0.75, seconds);
+    Drivetrain.turnFor(95);
+    IntakeMotor.set(!IntakeMotor);
+    Intake_group.spin(reverse, 100, percent);
+    Drivetrain.driveFor(8);
+    Intake_group.spin(forward, 100, percent);
+    IntakeMotor.set(!IntakeMotor);
+
+
+
+    ClawMotorGroup.spinFor(-1000, degrees);
+
+   /* Drivetrain.driveFor(-15, 1);
     Drivetrain.turnFor(-180, 1);
     wait(.5, seconds);
     ClampMotor.on();
     Drivetrain.driveFor(-20, 1);
-    Drivetrain.swingFor(right, 45, .7);
-    Drivetrain.driveFor(40, 2);
-
+   ArmMotorGroup.spinFor(-200, degrees);
+   
+    Drivetrain.driveFor(85);*/
 
 }
 
@@ -298,8 +329,8 @@ void usercontrol(void) {
         }
 
         // Toggle RatchetMotor LED on ButtonX Press
-        if (Controller.ButtonX.pressing() && !XwasPressing) {
-            RatchetMotor.set(!RatchetMotor);
+        if (Controller.ButtonY.pressing() && !YwasPressing) {
+            IntakeMotor.set(!IntakeMotor);
         }
 
         if (Controller.ButtonX.pressing()) {
@@ -325,7 +356,7 @@ void usercontrol(void) {
         // Update Toggle States
         RightwasPressing = Controller.ButtonRight.pressing();
         L1WasPressing = Controller.ButtonL1.pressing();
-        XwasPressing = Controller.ButtonX.pressing();
+        YwasPressing = Controller.ButtonY.pressing();
 
         // Set Drivetrain control
         MotorGroupLeft.spin(fwd, Controller.Axis3.position() + Controller.Axis1.position(), percent);
