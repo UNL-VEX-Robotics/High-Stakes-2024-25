@@ -57,7 +57,7 @@ motor_group ArmMotorGroup = motor_group(arm_Left, arm_Right);
 // Brain and LEDs
 vex::brain Brain;
 led ClampMotor = led(Brain.ThreeWirePort.G);
-led IntakeMotor = led(Brain.ThreeWirePort.F);
+
 
 inertial Inertial = inertial(PORT20);
 Graph graph = Graph(&Brain.Screen);
@@ -182,11 +182,6 @@ int intake_task() {
 }
 
 
-task auton_eject() {
-    
-}
-
-
 //------------------------------------------------------------------------------
 // Pre-Autonomous Functions
 //------------------------------------------------------------------------------
@@ -233,62 +228,80 @@ void pre_auton(void) {
 
 void skills(void) {
 
+Inertial.setHeading(270, degrees);
+    Drivetrain.setDriveConstants(1.15, 0.005, 0.6 , 9, 0.75, 30, -12, 12, 0.5);
+    Drivetrain.setTurnConstants(0.18, 0.01, 0.48, 15, 0.5, 50, -12, 12);
+    Drivetrain.setSwingConstants(0.2, 0.005, 0.3, 22, 0.5, 50, -12, 12);
+    Drivetrain.setArcConstants(0.25, 0.01, 0.7, 15, 0.5, 50, -12, 12);
+    //Drivetrain.driveFor(24);
+    //Drivetrain.turnFor(90);
+    //Drivetrain.swingFor(right,90);
     ClawMotorGroup.stop(hold);
     ArmMotorGroup.stop(hold);
     Intake_group.spin(forward, 50, percent);
     Drivetrain.driveFor(32,2);
-    Intake_group.stop(brake);
     wait(0.15,seconds);
-    Drivetrain.turnFor(-75);
+    Intake_group.stop(brake);
+    Drivetrain.turnFor(-77);
     wait(.25,seconds);
     Drivetrain.driveFor(-17);
-    Drivetrain.driveFor(-5);
+    Drivetrain.driveFor(-7);
     wait(.25, seconds);
     ClampMotor.set(!ClampMotor);
     wait(0.15, seconds);
     Intake_group.spin(forward, 100, percent);
-    wait(2, seconds);
-    Drivetrain.driveFor(22,1);
-    Intake_group.stop(brake);
-    Drivetrain.turnFor(47);
-    Drivetrain.driveFor(13);
-    Intake_group.spin(forward, 100, percent);
-    Drivetrain.driveFor(4.5);
-    wait(0.25, seconds);
-    Intake_group.stop(brake);
-    Drivetrain.driveFor(-25);
-    ArmMotorGroup.spinFor(590, degrees);
-    ClawMotorGroup.spinFor(-170, degrees);
-    wait(0.25, seconds);
-    Intake_group.spin(forward,100,percent);
-    Drivetrain.turnFor(135);
-    Drivetrain.driveFor(20);
-    wait(0.5, seconds);
-    Intake_group.stop(coast);
-    Drivetrain.turnFor(-90);
-    ArmMotorGroup.spinFor(-295, degrees);
-    Intake_group.spin(forward, 100, percent);
-    Drivetrain.driveFor(22);
     wait(0.75, seconds);
-    Drivetrain.turnFor(95);
-    IntakeMotor.set(!IntakeMotor);
-    Intake_group.spin(reverse, 100, percent);
-    Drivetrain.driveFor(8);
+    Drivetrain.driveFor(22);
+    Drivetrain.turnFor(47);
+    Intake_group.stop(brake);
+    Drivetrain.driveFor(13);
+    Drivetrain.driveFor(6);
     Intake_group.spin(forward, 100, percent);
-    IntakeMotor.set(!IntakeMotor);
-
-
-
-    ClawMotorGroup.spinFor(-1000, degrees);
-
-   /* Drivetrain.driveFor(-15, 1);
+    Drivetrain.driveFor(5);
+    wait(0.25, seconds);
+    Intake_group.stop(brake);
+    Drivetrain.driveFor(-30);
+    Intake_group.spinFor(reverse, 0.5, seconds);
+    wait(0.25, seconds);
+    //ArmMotorGroup.spinFor(561, degrees);
+    //ClawMotorGroup.spinFor(-160, degrees);
+    Intake_group.spin(forward,100,percent);
+    wait(0.5, seconds);
+    Drivetrain.turnFor(135);
+    ArmMotorGroup.spinFor(200, degrees);
+    Drivetrain.driveFor(180,2);
+    Drivetrain.driveFor(-3);
+    wait(0.5, seconds);
+    Intake_group.stop(brake);
+    Drivetrain.turnFor(-87);
+    Intake_group.spin(forward, 100, percent);
+    Drivetrain.driveFor(25);
+    Drivetrain.swingFor(left, 185);
+    Intake_group.spin(forward, 100, percent);
+    Drivetrain.driveFor(180,1.75);
+    Drivetrain.driveFor(-15);
+    Drivetrain.turnFor(-45);
+    Intake_group.stop(brake);
+    Drivetrain.driveFor(20, 1);
+    wait(0.5, seconds);
+    ArmMotorGroup.spinFor(361, degrees);
+    ClawMotorGroup.spinFor(-160, degrees);
+    Intake_group.spin(forward, 100, percent);
+    Drivetrain.driveFor(-15, 1);
     Drivetrain.turnFor(-180, 1);
     wait(.5, seconds);
     ClampMotor.on();
     Drivetrain.driveFor(-20, 1);
-   ArmMotorGroup.spinFor(-200, degrees);
-   
-    Drivetrain.driveFor(85);*/
+    Drivetrain.driveFor(32);
+    Drivetrain.turnFor(45);
+    Intake_group.stop(brake);
+    Drivetrain.driveFor(-45, 1.5);
+    Drivetrain.driveFor(48);
+    Drivetrain.turnFor(87);
+    Drivetrain.driveFor(45, 0.1);
+    Drivetrain.driveFor(-24);
+    Drivetrain.turnFor(-87);
+
 
 }
 
@@ -329,9 +342,6 @@ void usercontrol(void) {
         }
 
         // Toggle RatchetMotor LED on ButtonX Press
-        if (Controller.ButtonY.pressing() && !YwasPressing) {
-            IntakeMotor.set(!IntakeMotor);
-        }
 
         if (Controller.ButtonX.pressing()) {
             ClawMotorGroup.spin(reverse, 100, percent);
