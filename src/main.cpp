@@ -241,6 +241,7 @@ Inertial.setHeading(270, degrees);
     //Drivetrain.swingFor(right,90);
     ClawMotorGroup.stop(hold);
     ArmMotorGroup.stop(hold);
+    MotorGroupRight.stop
     ClawMotorGroup.setVelocity(100, percent);
     ArmMotorGroup.setVelocity(100, percent);
     Intake_group.spin(forward, 50, percent);
