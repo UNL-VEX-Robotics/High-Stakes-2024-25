@@ -289,9 +289,9 @@ Inertial.setHeading(270, degrees);
     Drivetrain.turnFor(-90, 1);
     Intake_group.spin(forward, 100, percent);
     Drivetrain.driveFor(15);
-    Drivetrain.driveFor(5);
+    Drivetrain.driveFor(10);
     //Swings grabs two red rings and runs for the red ring by the corner
-    Drivetrain.swingFor(left, 180);
+    Drivetrain.swingFor(left, 170);
     Intake_group.spin(forward, 100, percent);
     Drivetrain.driveFor(36,2.5); 
     //BRUTILLY RAMS INTO THE WALL TO RESET
@@ -351,13 +351,13 @@ Inertial.setHeading(270, degrees);
     ClawMotorGroup.spinFor(-1200, degrees);
     Drivetrain.driveFor(-13, 1.5);
     //AUTON PART 2 (second half of the feild)
-    Drivetrain.turnFor(-87, 1.5);
+    Drivetrain.turnFor(87, 1.5);
     Intake_group.spin(forward, 100, percent);
-    Drivetrain.driveFor(24);
+    Drivetrain.driveFor(-24);
     Drivetrain.turnFor(87);
     //Grabs second mogo
     Drivetrain.driveFor(24, 1.5);
-    Drivetrain.driveFor(48, 1.75);
+    Drivetrain.driveFor(-48, 1.75);
     ClampMotor.set(!ClampMotor);
     ClawMotorGroup.spinFor(2000, degrees);
     ArmMotorGroup.spinFor(-200, degrees);
@@ -387,8 +387,8 @@ Inertial.setHeading(270, degrees);
     Drivetrain.turnFor(135);
     Drivetrain.driveFor(24);
     Drivetrain.driveFor(-24);
-    Drivetrain.turnFor(180);
-    Drivetrain.driveFor(48);
+    Drivetrain.turnFor(90);
+    Drivetrain.driveFor(-48);
     //Grabs last mogo
     ClampMotor.set(!ClampMotor);
     Drivetrain.driveFor(24);
