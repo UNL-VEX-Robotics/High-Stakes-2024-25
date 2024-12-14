@@ -76,6 +76,7 @@ bool clawPresetEnabled = false;
 bool redirectMode = false; //will delete
 bool ejectRing = false; //will delete
 bool YwasPressing = false;
+bool macro_live = false;
 
 // Optical sensor
 optical Optical = optical(PORT4);
@@ -233,33 +234,41 @@ Inertial.setHeading(270, degrees);
     Drivetrain.setTurnConstants(0.18, 0.01, 0.48, 15, 0.5, 50, -12, 12);
     Drivetrain.setSwingConstants(0.2, 0.005, 0.3, 22, 0.5, 50, -12, 12);
     Drivetrain.setArcConstants(0.25, 0.01, 0.7, 15, 0.5, 50, -12, 12);
+   
+   
     //Drivetrain.driveFor(24);
     //Drivetrain.turnFor(90);
     //Drivetrain.swingFor(right,90);
     ClawMotorGroup.stop(hold);
     ArmMotorGroup.stop(hold);
+    ClawMotorGroup.setVelocity(100, percent);
+    ArmMotorGroup.setVelocity(100, percent);
     Intake_group.spin(forward, 50, percent);
+    //first ring
     Drivetrain.driveFor(32,2);
     wait(0.15,seconds);
-    Intake_group.stop(brake);
+    Intake_group.stop(coast);
     Drivetrain.turnFor(-77);
     wait(.25,seconds);
     Drivetrain.driveFor(-17);
-    Drivetrain.driveFor(-7);
+    Drivetrain.driveFor(-8);
     wait(.25, seconds);
+    //grabs mogo
     ClampMotor.set(!ClampMotor);
     wait(0.15, seconds);
     Intake_group.spin(forward, 100, percent);
     wait(0.75, seconds);
     Drivetrain.driveFor(22);
+    //turns to the middle of the feild
     Drivetrain.turnFor(47);
-    Intake_group.stop(brake);
+    Intake_group.stop(coast);
+    //inakes middle ring
     Drivetrain.driveFor(13);
     Drivetrain.driveFor(6);
     Intake_group.spin(forward, 100, percent);
     Drivetrain.driveFor(5);
     wait(0.25, seconds);
-    Intake_group.stop(brake);
+    Intake_group.stop(coast);
     Drivetrain.driveFor(-30);
     Intake_group.spinFor(reverse, 0.5, seconds);
     wait(0.25, seconds);
@@ -269,38 +278,80 @@ Inertial.setHeading(270, degrees);
     wait(0.5, seconds);
     Drivetrain.turnFor(135);
     ArmMotorGroup.spinFor(200, degrees);
-    Drivetrain.driveFor(180,2);
+    //BRUTILLY RAMS INTO THE WALL TO RESET
+    Intake_group.stop(coast);
+    Drivetrain.driveFor(40,2);
+    // Drivetrain.driveFor(10,2);
+    // Drivetrain.driveFor(20,2);
+    wait(0.5, seconds);
     Drivetrain.driveFor(-3);
     wait(0.5, seconds);
-    Intake_group.stop(brake);
-    Drivetrain.turnFor(-87);
+    Intake_group.stop(coast);
+    Drivetrain.turnFor(-90, 1);
     Intake_group.spin(forward, 100, percent);
     Drivetrain.driveFor(25);
-    Drivetrain.swingFor(left, 185);
+    //Swings grabs two red rings and runs for the red ring by the corner
+    Drivetrain.swingFor(left, 180);
     Intake_group.spin(forward, 100, percent);
-    Drivetrain.driveFor(180,1.75);
-    Drivetrain.driveFor(-15);
-    Drivetrain.turnFor(-45);
-    Intake_group.stop(brake);
+    Drivetrain.driveFor(36,2); 
+    //BRUTILLY RAMS INTO THE WALL TO RESET
+    Intake_group.stop(coast);
+    Drivetrain.driveFor(44,1);
+    //Drivetrain.driveFor(8,1);
+    //Drivetrain.driveFor(20,1);
+    wait(0.75, seconds);
+    Intake_group.spin(forward, 100, percent);
+    Drivetrain.driveFor(-10);
+    //Turns to the corner
+    Drivetrain.turnFor(-45, 1);
+    //Intakes the corner ring stops intake then moves the arms to where it can take the red ring into the claw
+    ClawMotorGroup.setVelocity(50, percent);
+    ArmMotorGroup.setVelocity(50, percent);
     Drivetrain.driveFor(20, 1);
-    wait(0.5, seconds);
+    Intake_group.stop(coast);
     ArmMotorGroup.spinFor(361, degrees);
     ClawMotorGroup.spinFor(-160, degrees);
     Intake_group.spin(forward, 100, percent);
+    //backs up then spins 180 to dump the mogo into the corner 
+    ClawMotorGroup.setVelocity(100, percent);
+    ArmMotorGroup.setVelocity(100, percent);
     Drivetrain.driveFor(-15, 1);
     Drivetrain.turnFor(-180, 1);
     wait(.5, seconds);
     ClampMotor.on();
-    Drivetrain.driveFor(-20, 1);
-    Drivetrain.driveFor(32);
-    Drivetrain.turnFor(45);
-    Intake_group.stop(brake);
-    Drivetrain.driveFor(-45, 1.5);
-    Drivetrain.driveFor(48);
-    Drivetrain.turnFor(87);
-    Drivetrain.driveFor(45, 0.1);
-    Drivetrain.driveFor(-24);
-    Drivetrain.turnFor(-87);
+    wait(.5, seconds);
+    Drivetrain.driveFor(-25, 1);
+    //Drives back and resets of the wall again 
+    Drivetrain.driveFor(16, 1);
+    Drivetrain.turnFor(45, 1);
+    Intake_group.stop(coast);
+    //BRUTIAL WALL RAM
+    Intake_group.stop(coast);
+    wait(1, seconds);
+    Drivetrain.driveFor(-40, 1.5);
+    //Drivetrain.driveFor(-10, 1.5);
+    //Drivetrain.driveFor(-20, 1.5);
+    wait(1, seconds);
+    Intake_group.spin(forward, 100, percent);
+    Drivetrain.driveFor(48, 1);
+    Drivetrain.turnFor(90, 1);
+    //BRUTIAL WALL RAM
+    Intake_group.stop(coast);
+    Drivetrain.driveFor(53, 1);
+    //Drivetrain.driveFor(11, 0.75);
+    //Drivetrain.driveFor(20, 0.75);
+    wait(1, seconds);
+    Drivetrain.driveFor(-18, 1);
+    Drivetrain.turnFor(-90, 1);
+    Drivetrain.driveFor(18, 1.5);
+    Drivetrain.turnFor(95, 1);
+    //Ready to score wall stake
+    ArmMotorGroup.spinFor(-200, degrees);
+    Drivetrain.driveFor(24,1.5);
+    ClawMotorGroup.spinFor(-1200, degrees);
+    Drivetrain.driveFor(-24, 1.5);
+    //AUTON PART 2 (second half of the feild)
+    Drivetrain.turnFor(-90, 1.5);
 
 
 }
@@ -334,6 +385,120 @@ void autonomous(void) {
  */
 void usercontrol(void) {
     vex::thread intake_Functionality = vex::thread(intake_task);
+    while (macro_live = false){
+            Inertial.setHeading(270, degrees);
+            Drivetrain.setDriveConstants(1.15, 0.005, 0.6 , 9, 0.75, 30, -12, 12, 0.5);
+            Drivetrain.setTurnConstants(0.18, 0.01, 0.48, 15, 0.5, 50, -12, 12);
+            Drivetrain.setSwingConstants(0.2, 0.005, 0.3, 22, 0.5, 50, -12, 12);
+            Drivetrain.setArcConstants(0.25, 0.01, 0.7, 15, 0.5, 50, -12, 12);
+        
+        
+            //Drivetrain.driveFor(24);
+            //Drivetrain.turnFor(90);
+            //Drivetrain.swingFor(right,90);
+            ClawMotorGroup.stop(hold);
+            ArmMotorGroup.stop(hold);
+            ClawMotorGroup.setVelocity(100, percent);
+            ArmMotorGroup.setVelocity(100, percent);
+            Intake_group.spin(forward, 50, percent);
+            //first ring
+            Drivetrain.driveFor(32,2);
+            wait(0.15,seconds);
+            Intake_group.stop(coast);
+            Drivetrain.turnFor(-77);
+            wait(.25,seconds);
+            Drivetrain.driveFor(-17);
+            Drivetrain.driveFor(-8);
+            wait(.25, seconds);
+            //grabs mogo
+            ClampMotor.set(!ClampMotor);
+            wait(0.15, seconds);
+            Intake_group.spin(forward, 100, percent);
+            wait(0.75, seconds);
+            Drivetrain.driveFor(22);
+            //turns to the middle of the feild
+            Drivetrain.turnFor(47);
+            Intake_group.stop(coast);
+            //inakes middle ring
+            Drivetrain.driveFor(13);
+            Drivetrain.driveFor(6);
+            Intake_group.spin(forward, 100, percent);
+            Drivetrain.driveFor(5);
+            wait(0.25, seconds);
+            Intake_group.stop(coast);
+            Drivetrain.driveFor(-30);
+            Intake_group.spinFor(reverse, 0.5, seconds);
+            wait(0.25, seconds);
+            //ArmMotorGroup.spinFor(561, degrees);
+            //ClawMotorGroup.spinFor(-160, degrees);
+            Intake_group.spin(forward,100,percent);
+            wait(0.5, seconds);
+            Drivetrain.turnFor(135);
+            ArmMotorGroup.spinFor(200, degrees);
+            //BRUTILLY RAMS INTO THE WALL TO RESET
+            Drivetrain.driveFor(10,2);
+            Drivetrain.driveFor(30,2);
+            wait(0.5, seconds);
+            Drivetrain.driveFor(-3);
+            wait(0.5, seconds);
+            Intake_group.stop(coast);
+            Drivetrain.turnFor(-90, 1);
+            Intake_group.spin(forward, 100, percent);
+            Drivetrain.driveFor(25);
+            //Swings grabs two red rings and runs for the red ring by the corner
+            Drivetrain.swingFor(left, 180);
+            Intake_group.spin(forward, 100, percent);
+            Drivetrain.driveFor(36,2);
+            //BRUTILLY RAMS INTO THE WALL TO RESET
+            Drivetrain.driveFor(36,1);
+            wait(0.75, seconds);
+            Drivetrain.driveFor(-10);
+            //Turns to the corner
+            Drivetrain.turnFor(-45, 1);
+            //Intakes the corener ring stops intake then moves the arms to where it can take the red ring into the claw
+            ClawMotorGroup.setVelocity(50, percent);
+            ArmMotorGroup.setVelocity(50, percent);
+            Drivetrain.driveFor(20, 1);
+            Intake_group.stop(coast);
+            ArmMotorGroup.spinFor(361, degrees);
+            ClawMotorGroup.spinFor(-160, degrees);
+            Intake_group.spin(forward, 100, percent);
+            //backs up then spins 180 to dump the mogo into the corner 
+            ClawMotorGroup.setVelocity(100, percent);
+            ArmMotorGroup.setVelocity(100, percent);
+            Drivetrain.driveFor(-15, 1);
+            Drivetrain.turnFor(-180, 1);
+            wait(.5, seconds);
+            ClampMotor.on();
+            wait(.5, seconds);
+            Drivetrain.driveFor(-25, 1);
+            //Drives back and resets of the wall again 
+            Drivetrain.driveFor(32, 1);
+            Drivetrain.turnFor(45, 1);
+            Intake_group.stop(coast);
+            //BRUTIAL WALL RAM
+            wait(1, seconds);
+            Drivetrain.driveFor(-45, 1.5);
+            Drivetrain.driveFor(48, 1);
+            Drivetrain.turnFor(90, 1);
+            //BRUTIAL WALL RAM
+            Drivetrain.driveFor(45, 0.75);
+            wait(1, seconds);
+            Drivetrain.driveFor(-18, 1);
+            Drivetrain.turnFor(-90, 1);
+            Drivetrain.driveFor(22.75, 1.5);
+            Drivetrain.turnFor(90, 1);
+            //Ready to score wall stake
+            ArmMotorGroup.spinFor(-200, degrees);
+            Drivetrain.driveFor(24,1.5);
+            ClawMotorGroup.spinFor(-1200, degrees);
+            Drivetrain.driveFor(-24, 1.5);
+            //AUTON PART 2 (second half of the feild)
+            Drivetrain.turnFor(-90, 1.5);
+        }
+        if (Controller.ButtonA.pressing()){
+            macro_live = true;
+        }
 
     while (true) {
         // Toggle Clamp LED on ButtonL1 Press
