@@ -241,7 +241,6 @@ Inertial.setHeading(270, degrees);
     //Drivetrain.swingFor(right,90);
     ClawMotorGroup.stop(hold);
     ArmMotorGroup.stop(hold);
-    MotorGroupRight.stop
     ClawMotorGroup.setVelocity(100, percent);
     ArmMotorGroup.setVelocity(100, percent);
     Intake_group.spin(forward, 50, percent);
@@ -273,8 +272,6 @@ Inertial.setHeading(270, degrees);
     Drivetrain.driveFor(-30);
     Intake_group.spinFor(reverse, 0.5, seconds);
     wait(0.25, seconds);
-    //ArmMotorGroup.spinFor(561, degrees);
-    //ClawMotorGroup.spinFor(-160, degrees);
     Intake_group.spin(forward,100,percent);
     wait(0.5, seconds);
     Drivetrain.turnFor(135);
@@ -353,6 +350,54 @@ Inertial.setHeading(270, degrees);
     Drivetrain.driveFor(-24, 1.5);
     //AUTON PART 2 (second half of the feild)
     Drivetrain.turnFor(-90, 1.5);
+    Intake_group.spin(forward, 100, percent);
+    Drivetrain.driveFor(24);
+    Drivetrain.turnFor(90);
+    //Grabs second mogo
+    Drivetrain.driveFor(-24);
+    ClampMotor.set(!ClampMotor);
+    Drivetrain.turnFor(135);
+    Intake_group.stop(brake);
+    Drivetrain.driveFor(13);
+    //Grabs second middle ring
+    Intake_group.spin(forward, 100, percent);
+    wait(0.5, seconds);
+    Intake_group.stop(brake);
+    //Backs out of middle
+    Drivetrain.driveFor(-13);
+    Drivetrain.turnFor(135);
+    Intake_group.spin(forward, 100, percent);
+    Drivetrain.driveFor(24);
+    Drivetrain.turnFor(90);
+    Drivetrain.driveFor(24);
+    Drivetrain.turnFor(-45);
+    //Intakes cornner ring
+    Drivetrain.driveFor(24);
+    Drivetrain.driveFor(-24);
+    Drivetrain.turnFor(180);
+    ClampMotor.set(!ClampMotor);
+    Drivetrain.driveFor(-15);
+    Drivetrain.driveFor(15);
+    //Hits wall
+    Drivetrain.turnFor(135);
+    Drivetrain.driveFor(24);
+    Drivetrain.driveFor(-24);
+    Drivetrain.turnFor(180);
+    Drivetrain.driveFor(48);
+    //Grabs last mogo
+    ClampMotor.set(!ClampMotor);
+    Drivetrain.driveFor(24);
+    Drivetrain.turnFor(90);
+    Drivetrain.driveFor(24);
+    Drivetrain.turnFor(45);
+    //Goes in middle
+    Drivetrain.driveFor(15);
+    Drivetrain.swingFor(left, 180);
+    Drivetrain.driveFor(48);
+    Drivetrain.turnFor(180);
+    ClampMotor.set(!ClampMotor);
+    //Ready to hang
+    Drivetrain.driveFor(222);
 
 
 }
