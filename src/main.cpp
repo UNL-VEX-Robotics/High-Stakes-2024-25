@@ -57,6 +57,7 @@ motor_group ArmMotorGroup = motor_group(arm_Left, arm_Right);
 // Brain and LEDs
 vex::brain Brain;
 led ClampMotor = led(Brain.ThreeWirePort.G);
+led RatchetMotor= led(Brain.ThreeWirePort.F);
 
 
 inertial Inertial = inertial(PORT20);
@@ -248,7 +249,7 @@ Inertial.setHeading(270, degrees);
     Drivetrain.driveFor(32,2);
     wait(0.15,seconds);
     Intake_group.stop(coast);
-    Drivetrain.turnFor(-77);
+    Drivetrain.turnFor(-85);
     wait(.25,seconds);
     Drivetrain.driveFor(-17);
     Drivetrain.driveFor(-8);
@@ -260,11 +261,11 @@ Inertial.setHeading(270, degrees);
     wait(0.75, seconds);
     Drivetrain.driveFor(22);
     //turns to the middle of the feild
-    Drivetrain.turnFor(47);
+    Drivetrain.turnFor(49);
     Intake_group.stop(coast);
     //inakes middle ring
     Drivetrain.driveFor(13);
-    Drivetrain.driveFor(6);
+    Drivetrain.driveFor(8);
     Intake_group.spin(forward, 100, percent);
     Drivetrain.driveFor(5);
     wait(0.25, seconds);
@@ -287,14 +288,15 @@ Inertial.setHeading(270, degrees);
     Intake_group.stop(coast);
     Drivetrain.turnFor(-90, 1);
     Intake_group.spin(forward, 100, percent);
-    Drivetrain.driveFor(25);
+    Drivetrain.driveFor(15);
+    Drivetrain.driveFor(5);
     //Swings grabs two red rings and runs for the red ring by the corner
     Drivetrain.swingFor(left, 180);
     Intake_group.spin(forward, 100, percent);
-    Drivetrain.driveFor(36,2); 
+    Drivetrain.driveFor(36,2.5); 
     //BRUTILLY RAMS INTO THE WALL TO RESET
     Intake_group.stop(coast);
-    Drivetrain.driveFor(44,1);
+    Drivetrain.driveFor(44,1.5);
     //Drivetrain.driveFor(8,1);
     //Drivetrain.driveFor(20,1);
     wait(0.75, seconds);
@@ -341,21 +343,24 @@ Inertial.setHeading(270, degrees);
     wait(1, seconds);
     Drivetrain.driveFor(-18, 1);
     Drivetrain.turnFor(-90, 1);
-    Drivetrain.driveFor(18, 1.5);
+    Drivetrain.driveFor(20, 1.5);
     Drivetrain.turnFor(95, 1);
     //Ready to score wall stake
     ArmMotorGroup.spinFor(-200, degrees);
-    Drivetrain.driveFor(24,1.5);
+    Drivetrain.driveFor(30,1);
     ClawMotorGroup.spinFor(-1200, degrees);
-    Drivetrain.driveFor(-24, 1.5);
+    Drivetrain.driveFor(-13, 1.5);
     //AUTON PART 2 (second half of the feild)
-    Drivetrain.turnFor(-90, 1.5);
+    Drivetrain.turnFor(-87, 1.5);
     Intake_group.spin(forward, 100, percent);
     Drivetrain.driveFor(24);
-    Drivetrain.turnFor(90);
+    Drivetrain.turnFor(87);
     //Grabs second mogo
-    Drivetrain.driveFor(-24);
+    Drivetrain.driveFor(24, 1.5);
+    Drivetrain.driveFor(48, 1.75);
     ClampMotor.set(!ClampMotor);
+    ClawMotorGroup.spinFor(2000, degrees);
+    ArmMotorGroup.spinFor(-200, degrees);
     Drivetrain.turnFor(135);
     Intake_group.stop(brake);
     Drivetrain.driveFor(13);
@@ -397,6 +402,7 @@ Inertial.setHeading(270, degrees);
     Drivetrain.turnFor(180);
     ClampMotor.set(!ClampMotor);
     //Ready to hang
+    
     Drivetrain.driveFor(222);
 
 
@@ -553,7 +559,9 @@ void usercontrol(void) {
         }
 
         // Toggle RatchetMotor LED on ButtonX Press
-
+        if(Controller.ButtonY.PRESSED){
+            RatchetMotor.set(!RatchetMotor);
+        }
         if (Controller.ButtonX.pressing()) {
             ClawMotorGroup.spin(reverse, 100, percent);
         }else if (Controller.ButtonB.pressing()) {
