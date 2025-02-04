@@ -24,13 +24,13 @@ competition Competition;
 controller Controller = controller();
 
 // Motors for Left Side
-motor Left_Motor1 = motor(PORT11, true);
-motor Left_Motor2 = motor(PORT20, true);
+motor Left_Motor1 = motor(PORT20, true);
+motor Left_Motor2 = motor(PORT14, true);
 motor_group MotorGroupLeft = motor_group(Left_Motor1, Left_Motor2);
 
 // Motors for Right Side
-motor Right_Motor1 = motor(PORT1);
-motor Right_Motor2 = motor(PORT10);
+motor Right_Motor1 = motor(PORT10);
+motor Right_Motor2 = motor(PORT3);
 motor_group MotorGroupRight = motor_group(Right_Motor1, Right_Motor2);
 
 // Intake Motors
