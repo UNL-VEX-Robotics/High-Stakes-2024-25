@@ -10,252 +10,235 @@
 #include "odom.h"
 
 /**
- * Private function that converts degrees to radians
- * 
- * @param   deg Angle measure in degrees
- * 
- * @return  Angle measure in radians
+ * Default constructor for the odometry_pod class
  */
-float odom::degToRad(float deg){
-    return deg * (M_PI / 180);
+odometry::odometry_pod::odometry_pod() :
+m_sensor(NONE),
+m_orientation(VERTICAL),
+m_distanceFromTrackingCenter(0.0f)
+{
 }
 
 /**
- * Starts and contains the odometry loop
- * Updates at a constant rate defined by user
- * Based on the 5225 Pilons odometry: http://thepilons.ca/wp-content/uploads/2018/10/Tracking.pdf
+ * Constructor method for an odometry pod
+ *
+ * @param sensor the type of sensor being used
+ * @param orientation the orientation of the tracking wheel
+ * @param encoder a pointer to the encoder on the tracking wheel
+ * @param distanceFromTrackingCenter the perpendicular distance from the wheel to the tracking center of the robot
+ *
+ * @return an odometry_pod object
  */
-void odom::start(){
-    this->isRunning = true;
+odometry::odometry_pod::odometry_pod(wheelOrientation orientation, vex::encoder *encoder, float distanceFromTrackingCenter, float inchesPerDegree) :
+    m_sensor(OS_ENCODER),
+    m_orientation(orientation),
+    m_encoder(encoder),
+    m_distanceFromTrackingCenter(distanceFromTrackingCenter),
+    m_inchesPerDegree(inchesPerDegree)
+{
+}
 
-    float previousVertical;
-    float previousHorizontal;
-    if(this->usesRotation){
-        previousVertical = this->verticalRotation->position(vex::rotationUnits::deg) \
-            * this->verticalInchesPerDegree;
-        previousHorizontal = this->horizontalRotation->position(vex::rotationUnits::deg) \
-            * this->horizontalInhcesPerDegree;
+/**
+ * Constructor method for an odometry pod
+ * 
+ * @param sensor the type of sensor being used
+ * @param orientation the orientation of the tracking wheel
+ * @param rotation a pointer to the rotation sensor on the tracking wheel
+ * @param distanceFromTrackingCenter the perpendicular distance from the wheel to the tracking center of the robot
+ * 
+ * @return an odometry_pod object
+ */
+odometry::odometry_pod::odometry_pod(wheelOrientation orientation, vex::rotation *rotation, float distanceFromTrackingCenter, float inchesPerDegree) :
+    m_sensor(V5_ROTATION),
+    m_orientation(orientation),
+    m_rotation(rotation),
+    m_distanceFromTrackingCenter(distanceFromTrackingCenter),
+    m_inchesPerDegree(inchesPerDegree)
+{
+}
+
+/**
+ * Constructor method for an odometry pod
+ * 
+ * @param sensor the type of sensor being used
+ * @param orientation the orientation of the tracking wheel
+ * @param motor a pointer to the motor on the tracking wheel
+ * @param distanceFromTrackingCenter the perpendicular distance from the wheel to the tracking center of the robot
+ * 
+ * @return an odometry_pod object
+ */
+odometry::odometry_pod::odometry_pod(wheelOrientation orientation, vex::motor *motor, float distanceFromTrackingCenter, float inchesPerDegree) :
+    m_sensor(V5_MOTOR_ENCODER),
+    m_orientation(orientation),
+    m_motor(motor),
+    m_distanceFromTrackingCenter(distanceFromTrackingCenter),
+    m_inchesPerDegree(inchesPerDegree)
+{
+}
+
+/**
+ * @return the perpendicular distance from the tracking wheel to the tracking center of the robot
+ */
+inline float odometry::odometry_pod::getDistanceFromTrackingCenter()
+{
+    return m_distanceFromTrackingCenter;
+}
+
+/**
+ * @return the position of the tracking wheel's sensor
+ */
+float odometry::odometry_pod::getPosition()
+{
+    switch (m_sensor)
+    {
+        case V5_MOTOR_ENCODER:
+            return m_motor->position(vex::rotationUnits::deg) * m_inchesPerDegree;
+        case V5_ROTATION:
+            return m_rotation->position(vex::rotationUnits::deg) * m_inchesPerDegree;
+        case OS_ENCODER:
+            return m_encoder->position(vex::rotationUnits::deg) * m_inchesPerDegree;   
+        default:
+            return 0.0f;
     }
-    else{
-        previousVertical = this->verticalEncoder->position(vex::rotationUnits::deg) \
-            * this->verticalInchesPerDegree;
-        previousHorizontal = this->horizontalEncoder->position(vex::rotationUnits::deg) \
-            * this->horizontalInhcesPerDegree;
-    }
-    float previousHeading = odom::degToRad(this->Inertial->rotation(vex::rotationUnits::deg));
+}
 
-    while(isRunning){
-        auto cycleStart = std::chrono::system_clock::now();
+/**
+ * Converts degrees to radians
+ * 
+ * @param degrees the number of degrees
+ * 
+ * @return the number of radians
+ */
+inline float odometry::convertToRadians(float degrees)
+{
+    return degrees * M_PI / 180.0f;
+}
 
-        float verticalPosition;
-        float horizontalPosition;
-        if(this->usesRotation){
-            verticalPosition = this->verticalRotation->position(vex::rotationUnits::deg) \
-                * this->verticalInchesPerDegree;
-            horizontalPosition = this->horizontalRotation->position(vex::rotationUnits::deg) \
-                * this->horizontalInhcesPerDegree;
-        }
-        else{
-            verticalPosition = this->verticalEncoder->position(vex::rotationUnits::deg) \
-                * this->verticalInchesPerDegree;
-            horizontalPosition = this->horizontalEncoder->position(vex::rotationUnits::deg) \
-                * this->horizontalInhcesPerDegree;
-        }
-        float heading = odom::degToRad(this->Inertial->rotation(vex::rotationUnits::deg));
-        this->robotPosition.at(2) = this->Inertial->heading(vex::rotationUnits::deg);
+/**
+ * Calculates the change in position of the vertical wheel, in inches
+ *
+ * @param   previousVerticalPosition the variable containing the previous position, this is updated
+ *
+ * @return the change in position, in inches
+ */
+float odometry::getVerticalChange(float &previousVerticalPosition)
+{
+    float currentPosition = m_verticalTrackingWheel.getPosition();
+    float changeInPosition = currentPosition - previousVerticalPosition;
+    previousVerticalPosition = currentPosition;
 
-        float changeInVertical = verticalPosition - previousVertical;
-        float changeInHorizontal = horizontalPosition - previousHorizontal;
-        float changeInHeading = heading - previousHeading;
+    return changeInPosition;
+}
+
+/**
+ * Calculates the change in position of the horizontal wheel, in inches
+ * 
+ * @param   previousHorizontalPosition the variable containing the previous position, this is updated
+ * 
+ * @return the change in position, in inches
+ */
+float odometry::getHorizontalChange(float &previousHorizontalPosition)
+{
+    float currentPosition = m_horizontalTrackingWheel.getPosition();
+    float changeInPosition = currentPosition - previousHorizontalPosition;
+    previousHorizontalPosition = currentPosition;
+
+    return changeInPosition;
+}
+
+/**
+ * Calculates the average rotation of the Inertial sensor
+ * 
+ * @param previousRotation the variable containing the previous rotation, this is updated
+ * 
+ * @return the average rotation, in radians
+ */
+float odometry::getChangeInRotation(float &previousRotation)
+{
+    float currentRotation = convertToRadians(m_Inertial->rotation(vex::rotationUnits::deg));
+    float changeInRotation = currentRotation - previousRotation;
+    previousRotation = currentRotation;
+
+    return changeInRotation;
+}
+
+/**
+ * Runs the main loop of odometry
+ * 
+ * @param initalX the starting x-coordinate
+ * @param initialY the starting y-coordinate
+ * @param initialHeading the startin heading
+ */
+void odometry::startTracking(float initialX, float initialY, float initialHeading)
+{
+    g_xPosition = initialX;
+    g_yPosition = initialY;
+    m_Inertial->setHeading(initialHeading, vex::rotationUnits::deg);
+    m_Inertial->setRotation(initialHeading, vex::rotationUnits::deg);
+
+    float previousVerticalPosition = m_verticalTrackingWheel.getPosition();
+    float previousHorizontalPosition = m_horizontalTrackingWheel.getPosition();
+    float previousRotation = convertToRadians(initialHeading);
+
+    m_tracking = true;
+
+    while(m_tracking)
+    {
+        float changeInVerticalPosition = getVerticalChange(previousVerticalPosition);
+        float changeInHorizontalPosition = getHorizontalChange(previousHorizontalPosition);
+        float changeInRotation = getChangeInRotation(previousRotation);
 
         float localX;
         float localY;
-        if(changeInHeading == 0){
-            localX = changeInHorizontal;
-            localY = changeInVertical;
+        if(changeInRotation == 0)
+        {
+            localX = changeInHorizontalPosition;
+            localY = changeInVerticalPosition;
         }
-        else{
-            localX = (2 * sinf(changeInHeading / 2)) \
-                * ((changeInHorizontal / changeInHeading) + horizontalDistanceFromCenter);
-            localY = (2 * sinf(changeInHeading / 2)) \
-                * ((changeInVertical / changeInHeading) + verticalDistanceFromCenter);
-        }
-
-        float localPolarAngle;
-        float polarRadius;
-        if(localX == 0 && localY == 0){
-            localPolarAngle = 0;
-            polarRadius = 0;
-        }
-        else{
-            localPolarAngle = atan2f(localY, localX);
-            polarRadius = sqrtf(powf(localX, 2) + powf(localY, 2));
+        else {
+            localX = 2 * sinf(convertToRadians(m_Inertial->rotation(vex::rotationUnits::deg))) * ((changeInHorizontalPosition / changeInRotation) + \
+                m_horizontalTrackingWheel.getDistanceFromTrackingCenter());
+            localY = 2 * sinf(convertToRadians(m_Inertial->rotation(vex::rotationUnits::deg))) * ((changeInVerticalPosition / changeInRotation) + \
+                m_verticalTrackingWheel.getDistanceFromTrackingCenter());
         }
 
-        float globalPolarAngle = localPolarAngle - previousHeading - (changeInHeading / 2);
+        float averageRotation = convertToRadians(m_Inertial->rotation(vex::rotationUnits::deg)) - (changeInRotation / 2);
 
-        previousVertical = verticalPosition;
-        previousHorizontal = horizontalPosition;
-        previousHeading = heading;
+        float polarRadius = hypotf(localX, localY);
+        float globalPolarAngle = atan2f(localX, localY) - averageRotation;
 
-        float changeinX = polarRadius * cosf(globalPolarAngle);
-        float changeinY = polarRadius * sinf(globalPolarAngle);
+        g_xPosition += cosf(globalPolarAngle) * polarRadius;
+        g_yPosition += sinf(globalPolarAngle) * polarRadius;
 
-        this->robotPosition.at(0) += changeinX;
-        this->robotPosition.at(1) += changeinY;
-
-        auto timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - cycleStart).count();
-
-        vex::this_thread::sleep_for(this->updateRateMilliseconds - timeElapsed);
+        vex::task::sleep(10);
     }
 }
 
 /**
- * Stops the odometry loop
+ * Stops the main odometry loop
  */
-void odom::stop(){
-    this->isRunning = false;
+void odometry::stopTracking()
+{
+    m_tracking = false;
 }
 
 /**
- * Constructor method using the vex V5 Rotation Sensors
- * Creates an odom object
- * 
- * @param   verticaRotation                 The V5 Rotation Sensor that is on the vertical tracking wheel
- * @param   horizontalRotation              The V5 Rotation Sensor that is on the horizontal tracking wheel
- * @param   Inertial                        The V5 Inertial sensor that is on the robot
- * @param   verticalDistanceFromCenter      The physical distance from the tracking center to the vertical tracking wheel, in inches
- * @param   verticalIncherPerDegree         The number of inches per degree of rotation of the vertical tracking wheel
- * @param   horizontalDistanceFromCenter    The physical distance from the tracking center to the horizontal tracking wheel, in inches
- * @param   horizontalInchesPerDegree       The number of inches per degree of rotation of the horizontal tracking wheel
- * @param   updateRateMilliseconds          The desired time between cycles of the odometry loop, in milliseconds, generally 5 or 10
+ * @return the position of the robot {x, y, heading} as {inches, inches, degrees}
  */
-odom::odom(vex::rotation &verticalRotation, vex::rotation &horizontalRotation, vex::inertial &Inertial, \
-    float verticalDistanceFromCenter, float verticalInchesPerDegree, float horizontalDistanceFromCenter, \
-        float horizontalInchesPerDegree, int updateRateMilliseconds){
-
-    this->verticalRotation = &verticalRotation;
-    this->horizontalRotation = &horizontalRotation;
-    this->Inertial = &Inertial;
-    this->verticalDistanceFromCenter = verticalDistanceFromCenter;
-    this->verticalInchesPerDegree = verticalInchesPerDegree;
-    this->horizontalDistanceFromCenter = horizontalDistanceFromCenter;
-    this->horizontalInhcesPerDegree = horizontalInchesPerDegree;
-    this->updateRateMilliseconds = updateRateMilliseconds;
-    this->usesRotation = true;
+std::vector<float> odometry::getPosition()
+{
+    return {g_xPosition, g_yPosition, (float)m_Inertial->heading(vex::rotationUnits::deg)};
 }
 
 /**
- * Constructor method using the 3-Wire VEX Encoders
- * Creates an odom object
+ * Constructor method for the odometry class
  * 
- * @param   verticaEncoder                  The 3-Wire VEX Encoder that is on the vertical tracking wheel
- * @param   horizontalEncoder               The 3-wire VEX Encoder that is on the horizontal tracking wheel
- * @param   Inertial                        The V5 Inertial sensor that is on the robot
- * @param   verticalDistanceFromCenter      The physical distance from the tracking center to the vertical tracking wheel, in inches
- * @param   verticalIncherPerDegree         The number of inches per degree of rotation of the vertical tracking wheel
- * @param   horizontalDistanceFromCenter    The physical distance from the tracking center to the horizontal tracking wheel, in inches
- * @param   horizontalInchesPerDegree       The number of inches per degree of rotation of the horizontal tracking wheel
- * @param   updateRateMilliseconds          The desired time between cycles of the odometry loop, in milliseconds, generally 5 or 10
+ * @param verticalTrackingWheel an odometry_pod object representing the vertical tracking wheel
+ * @param horizontalTrackingWheel an odometry_pod object representing the horizontal tracking wheel
  */
-odom::odom(vex::encoder &verticalEncoder, vex::encoder &horizontalEncoder, vex::inertial &Inertial, \
-    float verticalDistanceFromCenter, float verticalInchesPerDegree, float horizontalDistanceFromCenter, \
-        float horizontalInchesPerDegree, int updateRateMilliseconds){
-            
-    this->verticalEncoder = &verticalEncoder;
-    this->horizontalEncoder = &horizontalEncoder;
-    this->Inertial = &Inertial;
-    this->verticalDistanceFromCenter = verticalDistanceFromCenter;
-    this->verticalInchesPerDegree = verticalInchesPerDegree;
-    this->horizontalDistanceFromCenter = horizontalDistanceFromCenter;
-    this->horizontalInhcesPerDegree = horizontalInchesPerDegree;
-    this->updateRateMilliseconds = updateRateMilliseconds;
-    this->usesRotation = false;
-}
-
-/**
- * Defualt constructor
- */
-odom::odom(){};
-
-/**
- * Getter for the full robot position
- * 
- * @return  std::vector<float> containing robot position: (x, y, heading) in inches and degrees
- */
-std::vector<float> odom::getPosition(){
-    return this->robotPosition;
-}
-
-/**
- * Getter for the robot x position
- * 
- * @return  float containing robot x position in inches
- */
-float odom::getX(){
-    return this->robotPosition.at(0);
-}
-
-/**
- * Getter for the robot y position
- * 
- * @return  float containing robot y position in inches
- */
-float odom::getY(){
-    return this->robotPosition.at(1);
-}
-
-/**
- * Getter for the robot heading
- * 
- * @return  float containing robot heading in degrees
- */
-float odom::getHeading(){
-    return this->robotPosition.at(2);
-}
-
-/**
- * Sets the position of the robot
- * Sets the heading and rotation of the V5 Inertial Sensor
- * 
- * @param   x       the new robot x position in inches
- * @param   y       the new robot y position in inches
- * @param   heading the new robot heading in degrees
- */
-void odom::setPosition(float x, float y, float heading){
-    this->robotPosition.at(0) = x;
-    this->robotPosition.at(1) = y;
-    this->robotPosition.at(2) = heading;
-    this->Inertial->setHeading(heading, vex::rotationUnits::deg);
-    this->Inertial->setRotation(heading, vex::rotationUnits::deg);
-}
-
-/**
- * Sets the x position of the robot
- * 
- * @param   x   new robot x position in inches
- */
-void odom::setX(float x){
-    this->robotPosition.at(0) = x;
-}
-
-/**
- * Sets the y position of the robot
- * 
- * @param   y   new robot y position in inches
- */
-void odom::setY(float y){
-    this->robotPosition.at(1) = y;
-}
-
-/**
- * Sets the heading of the robot
- * Sets the heading and rotation of the V5 Inertial Sensor
- * 
- * @param   heading the new heading of the robot in degrees
- */
-void odom::setHeading(float heading){
-    this->robotPosition.at(2) = heading;
-    this->Inertial->setHeading(heading, vex::rotationUnits::deg);
-    this->Inertial->setRotation(heading, vex::rotationUnits::deg);
+odometry::odometry(odometry_pod verticalTrackingWheel, odometry_pod horizontalTrackingWheel, vex::inertial* Inertial) :
+m_verticalTrackingWheel(verticalTrackingWheel),
+m_horizontalTrackingWheel(horizontalTrackingWheel),
+m_Inertial(Inertial)
+{
 }
