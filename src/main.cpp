@@ -35,7 +35,6 @@ motor_group MotorGroupRight = motor_group(Right_Motor1, Right_Motor2);
 
 // Intake Motors
 motor HookIntake = motor(PORT19, true);
-motor FrontIntake = motor(PORT3, true);
 
 // Claw Motors
 motor ClawMotorLeft = motor(PORT11);
@@ -102,13 +101,31 @@ float readCurrentPosition() {
  * 
  * This function should contain the teleoperated control code for the robot.
  */
+
+// User Control Toggles
+bool tank = false;
+bool arcade = true;
 void usercontrol(void) {
 
   while (true) {
 
+    if (Controller.ButtonY.pressing()){
+      tank = !tank;
+      arcade = !arcade;
+      task::sleep(1000);
+    }
+
     // Drive Control (Tank Drive)
-    MotorGroupLeft.spin(fwd, Controller.Axis3.position(), percent);
-    MotorGroupRight.spin(fwd, Controller.Axis2.position(), percent);
+    if (tank){
+      MotorGroupLeft.spin(fwd, Controller.Axis3.position(), percent);
+      MotorGroupRight.spin(fwd, Controller.Axis2.position(), percent);
+    }
+
+    //Drive Code (2-Stick Arcade)
+    if (arcade){
+      MotorGroupLeft.spin(fwd, Controller.Axis3.position() + Controller.Axis1.position(), percent);
+      MotorGroupRight.spin(fwd, Controller.Axis3.position() - Controller.Axis1.position(), percent);
+    }
 
     task::sleep(20);
   }
