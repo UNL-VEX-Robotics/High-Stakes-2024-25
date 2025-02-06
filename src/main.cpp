@@ -45,10 +45,11 @@ motor_group ClawMotorGroup = motor_group(ClawMotorLeft, ClawMotorRight);
 brain Brain;
 led ClampMotor = led(Brain.ThreeWirePort.A);
 led RatchetMotor = led(Brain.ThreeWirePort.B);
-inertial Inertial = inertial(PORT20);
+inertial Inertial = inertial(PORT8);
 
-odometry Odom = odometry(odometry::odometry_pod(odometry::odometry_pod::VERTICAL, &Left_Motor1, 5.65625, 0.0212712), odometry::odometry_pod(), &Inertial);
-chassis Drivetrain = chassis(std::bind(&odometry::getPosition, &Odom), &MotorGroupLeft, &MotorGroupRight, &Inertial, 11.3125, 0.0212712);
+
+odometry Odom = odometry(odometry::odometry_pod(odometry::odometry_pod::VERTICAL, &Left_Motor1, 5.65625, 0.0425424), odometry::odometry_pod(), &Inertial);
+chassis Drivetrain = chassis(std::bind(&odometry::getPosition, &Odom), &MotorGroupLeft, &MotorGroupRight, &Inertial, 11.3125, 0.0425424);
 
 //------------------------------------------------------------------------------
 // Pre-Autonomous Functions
@@ -64,16 +65,27 @@ void pre_auton(void) {
   // All activities that occur before the competition starts
   // Example: clearing encoders, setting servo positions, ...
 
-  Inertial.startCalibration();
-  do {
-    task::sleep(50);
-  } while (Inertial.isCalibrating());
+    Brain.Screen.clearScreen();
+    Brain.Screen.setCursor(1, 1);
+    Brain.Screen.setPenColor(white);
+    Brain.Screen.setFillColor(black);
+    Brain.Screen.print("Calibrating...");
 
+    Inertial.startCalibration();
+    do {
+        task::sleep(50);
+    } while (Inertial.isCalibrating());
+
+    Brain.Screen.setCursor(2, 1);
+    Brain.Screen.setPenColor(green);
+    Brain.Screen.print("Calibrated.");
+    task::sleep(10);
   //PIDs
   Drivetrain.setDriveConstants(0.75, 0.005, 1, 9, 0.75, 30, -12, 12, 0.5);
   Drivetrain.setTurnConstants(0.15, 0.01, 0.6, 15, 0.5, 50, -12, 12);
   Drivetrain.setSwingConstants(0.2, 0.005, 0.3, 22, 0.5, 50, -12, 12);
   Drivetrain.setArcConstants(0.25, 0.01, 0.7, 15, 0.5, 50, -12, 12);
+  Inertial.setHeading(270, degrees);
 }
 
 //------------------------------------------------------------------------------
@@ -86,13 +98,18 @@ void pre_auton(void) {
  * This function should contain the autonomous routine for the robot.
  */
 void autonomous(void) {
-  Inertial.setHeading(270, degrees);  
+  Drivetrain.stopDrive(hold);
+  Brain.Screen.setCursor(3, 1);
+  Brain.Screen.setPenColor(green);
+  Brain.Screen.print("FUCK.");
   Drivetrain.setDriveConstants(0.75, 0.005, 1, 9, 0.75, 30, -12, 12, 0.5);
   Drivetrain.setTurnConstants(0.15, 0.01, 0.6, 15, 0.5, 50, -12, 12);
   Drivetrain.setSwingConstants(0.2, 0.005, 0.3, 22, 0.5, 50, -12, 12);
   Drivetrain.setArcConstants(0.25, 0.01, 0.7, 15, 0.5, 50, -12, 12);
 
+  Drivetrain.setDriveSpeed(50, velocityUnits::pct);
   Drivetrain.driveFor(24);
+  Drivetrain.stopDrive(hold);
 }
 
 /**
