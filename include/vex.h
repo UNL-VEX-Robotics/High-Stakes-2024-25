@@ -14,7 +14,7 @@
 
 #define waitUntil(condition)                                                   \
   do {                                                                         \
-    wait(5, msec);                                                             \
+    task::sleep(5);                                                             \
   } while (!(condition))
 
 #define repeat(iterations)                                                     \
