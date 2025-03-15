@@ -218,8 +218,8 @@ void chassis::setArcConstants(float Kp, float Ki, float Kd, float integralTolera
  */
 float chassis::driveFor(float distance)
 {
-    return this->driveFor(distance, INFINITY, 0, this->driveConstants.Kp, this->driveConstants.Ki, this->driveConstants.Kd, this->driveConstants.integralTolerance, \
-        this->driveConstants.settleTolerance, this->driveConstants.settleTime, this->driveConstants.minOutput, this->driveConstants.maxOutput, 0);
+    return this->driveFor(distance, INFINITY, this->Inertial->heading(vex::rotationUnits::deg), this->driveConstants.Kp, this->driveConstants.Ki, this->driveConstants.Kd, this->driveConstants.integralTolerance, \
+        this->driveConstants.settleTolerance, this->driveConstants.settleTime, this->driveConstants.minOutput, this->driveConstants.maxOutput, this->driveConstants.headingKp);
 }
 
 /**
@@ -232,8 +232,8 @@ float chassis::driveFor(float distance)
  */
 float chassis::driveFor(float distance, float timeout)
 {
-    return this->driveFor(distance, timeout, 0, this->driveConstants.Kp, this->driveConstants.Ki, this->driveConstants.Kd, this->driveConstants.integralTolerance, \
-        this->driveConstants.settleTolerance, this->driveConstants.settleTime, this->driveConstants.minOutput, this->driveConstants.maxOutput, 0);
+    return this->driveFor(distance, timeout, this->Inertial->heading(vex::rotationUnits::deg), this->driveConstants.Kp, this->driveConstants.Ki, this->driveConstants.Kd, this->driveConstants.integralTolerance, \
+        this->driveConstants.settleTolerance, this->driveConstants.settleTime, this->driveConstants.minOutput, this->driveConstants.maxOutput, this->driveConstants.headingKp);
 }
 
 /**
@@ -268,7 +268,7 @@ float chassis::driveFor(float distance, float timeout, float heading)
  */
 float chassis::driveFor(float distance, float timeout, float Kp, float Ki, float Kd, float integralTolerance, float settleTolerance, float settleTime, float minOutput, float maxOutput)
 {
-    return this->driveFor(distance, timeout, 0, Kp, Ki, Kd, integralTolerance, settleTolerance, settleTime, minOutput, maxOutput, 0);
+    return this->driveFor(distance, timeout, this->Inertial->heading(vex::rotationUnits::deg), Kp, Ki, Kd, integralTolerance, settleTolerance, settleTime, minOutput, maxOutput, this->driveConstants.headingKp);
 }
 
 /**
@@ -307,7 +307,7 @@ float chassis::driveFor(float distance, float timeout, float heading, float Kp, 
         else currentPosition = this->Left->position(vex::rotationUnits::deg) * this->degreesToInches;
 
         float driveError = distance - (currentPosition - initialPosition);
-        float headingError = this->restrain(this->Inertial->heading(vex::rotationUnits::deg) - heading, -180, 180);
+        float headingError = this->restrain(heading - this->Inertial->heading(vex::rotationUnits::deg), -180, 180);
 
         float driveOutput = drivePID.getOutput(driveError);
         float turnOutput = turnPID.getOutput(headingError);

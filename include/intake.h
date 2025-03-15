@@ -28,6 +28,7 @@ public:
     void setSpeed(int8_t speed);
     void setBrakeType(vex::brakeType stoppingType);
     bool setColorSort(bool enable);
+    void setColorSortOffset(int offset);
     void setColor(bool isRed);
     void setLadybrown(bool val);
     bool getLadybrown();

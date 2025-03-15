@@ -24,9 +24,11 @@ void intake::intake_task()
     m_Optical->integrationTime(5);
 
     bool ejectRing = false;
-    bool adjustedLadybrown = false;
     int jammedFor = 0;
     ladybrown::ladybrown_positions currentTarget;
+    int ejectTarget = 0;
+
+    //std::cout << "\n Color: " << (m_isRed ? "red" : "blue") << "\n";
     while(m_runIntakeTask)
     {
         currentTarget = m_ladybrown->getTargetPosition();
@@ -35,39 +37,23 @@ void intake::intake_task()
             if(m_Optical->isNearObject())
             {
                 m_Optical->setLightPower(50, vex::percentUnits::pct);
-                if((m_isRed && m_Optical->color() == vex::color::red) || (!m_isRed && m_Optical->color() == vex::color::blue)) ejectRing = true;
+                if(((!m_isRed && m_Optical->color() == vex::color::red) || (m_isRed && m_Optical->color() == vex::color::blue)) && !ejectRing)
+                {
+                    ejectRing = true;
+                    ejectTarget = m_Intake->position(vex::rotationUnits::deg) + m_ringEjectPosition;
+                    //std::cout << "\n Ejecting... \n";
+                }
+                //std::cout << "\n Seeing " << (m_Optical->color() == vex::color::red ? "red" : "blue" ) << " ring. \n";
             }
             else m_Optical->setLight(vex::ledState::off);
 
             if(ejectRing)
             {
-                adjustedLadybrown = true;
-                if(currentTarget == ladybrown::ladybrown_positions::READY)
-                {
-                    switch (m_ladybrown->getNearestPosition())
-                    {
-                        case ladybrown::ladybrown_positions::SCORE:
-                        case ladybrown::ladybrown_positions::STORAGE:
-                            m_ladybrown->setTarget(ladybrown::ladybrown_positions::STORAGE);
-                            break;
-                        case ladybrown::ladybrown_positions::READY:
-                        case ladybrown::ladybrown_positions::DOWN:
-                            m_ladybrown->setTarget(ladybrown::ladybrown_positions::DOWN);
-                            break;
-                    }
-                }
-
-                if (abs(((int)m_Intake->position(vex::rotationUnits::deg) % m_ringEjectPosition) - m_ringEjectPosition) < 35)
+                if(m_Intake->position(vex::rotationUnits::deg) >= ejectTarget) 
                 {
                     m_Intake->spin(vex::directionType::rev, 100, vex::percentUnits::pct);
                     vex::task::sleep(250);
                     ejectRing = false;
-
-                    if(adjustedLadybrown)
-                    {
-                        adjustedLadybrown = false;
-                        m_ladybrown->setTarget(ladybrown::ladybrown_positions::READY);
-                    }
                 }
             }
         }
@@ -114,6 +100,11 @@ bool intake::setColorSort(bool enable)
 {
     m_enableColorSort = enable;
     return enable;
+}
+
+void intake::setColorSortOffset(int offset)
+{
+    m_ringEjectPosition = offset;
 }
 
 /**
